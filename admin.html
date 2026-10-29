@@ -49,7 +49,15 @@
           <label>السعر بالجنيه المصري<input id="pPrice" type="number" min="0" step="0.01" required placeholder="مثال: 250"></label>
           <label>القسم<select id="pCategory" required></select></label>
           <label>كود المنتج<input id="pCode" maxlength="40" placeholder="اختياري"></label>
-          <label class="full-width">رابط صورة المنتج<input id="pImage" type="url" required placeholder="https://..."></label>
+          <div class="full-width">
+            <fieldset>
+              <legend>صورة المنتج (اختر طريقة واحدة)</legend>
+              <label><input type="radio" name="imageSource" value="url" checked> رابط صورة</label>
+              <label><input type="radio" name="imageSource" value="upload"> رفع صورة</label>
+              <label id="imageUrlField">رابط الصورة<input id="pImage" type="text" inputmode="url" required placeholder="https://..."></label>
+              <label id="imageUploadField" class="hidden">اختر صورة من جهازك<input id="pImageFile" type="file" accept="image/*"></label>
+            </fieldset>
+          </div>
           <label class="full-width">وصف مختصر<input id="pDesc" maxlength="300" placeholder="تفاصيل المنتج"></label>
           <div class="full-width admin-form-actions">
             <button class="button button-dark" id="saveProductButton" type="submit">إضافة المنتج</button>
@@ -78,6 +86,55 @@
 
   <div id="toast" class="toast" role="status"></div>
   <script src="catalog.js"></script>
+  <script>
+    (() => {
+      const urlChoice = document.querySelector('input[name="imageSource"][value="url"]');
+      const uploadChoice = document.querySelector('input[name="imageSource"][value="upload"]');
+      const urlField = document.getElementById('imageUrlField');
+      const imageUrl = document.getElementById('pImage');
+      const uploadField = document.getElementById('imageUploadField');
+      const imageFile = document.getElementById('pImageFile');
+      const form = document.getElementById('productForm');
+      let imageReady = false;
+
+      function updateImageChoice() {
+        const uploading = uploadChoice.checked;
+        urlField.classList.toggle('hidden', uploading);
+        uploadField.classList.toggle('hidden', !uploading);
+        imageUrl.required = !uploading;
+        imageFile.required = uploading;
+      }
+
+      urlChoice.addEventListener('change', updateImageChoice);
+      uploadChoice.addEventListener('change', updateImageChoice);
+      imageFile.addEventListener('change', () => {
+        imageReady = false;
+        if (!imageFile.files.length) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          imageUrl.value = reader.result;
+          imageReady = true;
+        };
+        reader.readAsDataURL(imageFile.files[0]);
+      });
+      form.addEventListener('submit', event => {
+        if (!uploadChoice.checked || imageReady) {
+          imageReady = false;
+          return;
+        }
+        event.preventDefault();
+        if (!imageFile.files.length) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          imageUrl.value = reader.result;
+          imageReady = true;
+          form.requestSubmit(event.submitter || undefined);
+        };
+        reader.readAsDataURL(imageFile.files[0]);
+      }, true);
+      updateImageChoice();
+    })();
+  </script>
   <script src="admin.js"></script>
 </body>
 </html>
