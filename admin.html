@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111111">
+  <title>إدارة المتجر | KABOUSH</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-page">
+  <header class="topbar">
+    <a class="brand" href="index.html" aria-label="العودة إلى المتجر">
+      <span class="brand-mark">K</span>
+      <span><strong>KABOUSH</strong><small>إدارة المتجر</small></span>
+    </a>
+    <a class="button button-light" href="index.html">العودة إلى المتجر</a>
+  </header>
+
+  <main class="admin-shell">
+    <section class="admin-card" id="authCard">
+      <h1 id="authTitle">دخول صاحب المتجر</h1>
+      <p id="authDescription">أدخل كلمة مرور لوحة الإدارة.</p>
+      <form id="authForm" class="admin-form"></form>
+      <p class="notice admin-warning">نسخة تجريبية فقط: الحماية في هذه الصفحة يمكن تجاوزها، والتعديلات لا تظهر على أجهزة العملاء. يلزم خادم وتسجيل دخول وقاعدة بيانات آمنة قبل النشر.</p>
+    </section>
+
+    <div id="adminContent" class="hidden">
+      <div class="admin-heading">
+        <div><h1>لوحة إدارة المتجر</h1><p>هذه النسخة تحفظ التغييرات على هذا المتصفح فقط؛ لن تظهر للزوار على أجهزتهم.</p></div>
+        <button class="button button-light" id="logoutButton" type="button">تسجيل الخروج</button>
+      </div>
+
+      <section class="admin-card">
+        <h2>بيانات التواصل</h2>
+        <form id="settingsForm" class="form-grid">
+          <label>رقم واتساب مع مفتاح الدولة<input id="adminWhatsapp" inputmode="numeric" placeholder="201XXXXXXXXX"></label>
+          <label>رقم الهاتف<input id="adminPhone" inputmode="tel" placeholder="رقم الهاتف"></label>
+          <label class="full-width">مواعيد العمل<input id="adminHours" placeholder="مثال: يوميًا من 10 صباحًا إلى 10 مساءً"></label>
+          <div class="full-width"><button class="button button-gold" type="submit">حفظ بيانات التواصل</button></div>
+        </form>
+      </section>
+
+      <section class="admin-card">
+        <h2 id="productFormTitle">إضافة منتج</h2>
+        <form id="productForm" class="form-grid">
+          <input id="productId" type="hidden">
+          <label>اسم المنتج<input id="pName" required maxlength="100" placeholder="اسم المنتج"></label>
+          <label>السعر بالجنيه المصري<input id="pPrice" type="number" min="0" step="0.01" required placeholder="مثال: 250"></label>
+          <label>القسم<select id="pCategory" required></select></label>
+          <label>كود المنتج<input id="pCode" maxlength="40" placeholder="اختياري"></label>
+          <label class="full-width">رابط صورة المنتج<input id="pImage" type="url" required placeholder="https://..."></label>
+          <label class="full-width">وصف مختصر<input id="pDesc" maxlength="300" placeholder="تفاصيل المنتج"></label>
+          <div class="full-width admin-form-actions">
+            <button class="button button-dark" id="saveProductButton" type="submit">إضافة المنتج</button>
+            <button class="button button-light hidden" id="cancelEditButton" type="button">إلغاء التعديل</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="admin-card">
+        <h2>الأقسام</h2>
+        <form id="categoryForm" class="category-form">
+          <label class="sr-only" for="categoryName">اسم القسم الجديد</label>
+          <input id="categoryName" required maxlength="50" placeholder="اسم القسم الجديد">
+          <button class="button button-dark" type="submit">إضافة قسم</button>
+        </form>
+        <p class="admin-help">لا يمكن حذف قسم يحتوي على منتجات؛ انقل منتجاته إلى قسم آخر أو احذفها أولًا.</p>
+        <div id="categoryList" class="category-list"></div>
+      </section>
+
+      <section class="admin-card">
+        <div class="section-heading"><div><h2>المنتجات الحالية</h2><p id="productCount"></p></div></div>
+        <div id="adminProductList" class="admin-product-list"></div>
+      </section>
+    </div>
+  </main>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="catalog.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

@@ -65,7 +65,7 @@
       <div class="section-heading"><div><h2>زورنا في المتجر</h2><p>افتح الاتجاهات إلى سنتر كابوش بسهولة</p></div></div>
       <div class="info-grid">
         <article class="info-card"><span class="info-icon">📍</span><h3>موقعنا</h3><p>سنتر كابوش للملابس الجاهزة<br>الموقع المحدد على خرائط Google</p></article>
-        <article class="info-card"><span class="info-icon">💬</span><h3>الحجز والاستفسار</h3><p>تواصل معنا عبر واتساب بعد إضافة رقم المتجر الصحيح من الإعدادات.</p></article>
+        <article class="info-card"><span class="info-icon">💬</span><h3>الحجز والاستفسار</h3><p>تواصل معنا عبر واتساب للاستفسار عن المنتجات والحجز.</p></article>
         <article class="info-card"><span class="info-icon">🛍️</span><h3>اختار براحتك</h3><p>تصفح المنتجات، راجع المقاسات والأسعار، ثم أرسل تفاصيل الحجز.</p></article>
       </div>
       <div class="map-card">
@@ -83,32 +83,6 @@
       </div>
     </section>
 
-    <section class="section" id="admin">
-      <div class="section-heading"><div><h2>إدارة المتجر</h2><p>إضافة المنتجات وتعديل بيانات التواصل</p></div></div>
-      <div class="admin-panel">
-        <p class="notice">نسخة تجريبية: تُحفظ البيانات على هذا المتصفح فقط. قبل النشر العام، اربط المشروع بقاعدة بيانات وسجّل دخول آمن للإدارة.</p>
-        <h3>بيانات المتجر</h3>
-        <div class="form-grid">
-          <label>رقم واتساب مع مفتاح الدولة<input id="adminWhatsapp" inputmode="numeric" placeholder="201XXXXXXXXX"></label>
-          <label>رقم الهاتف<input id="adminPhone" inputmode="tel" placeholder="رقم الهاتف"></label>
-          <label class="full-width">مواعيد العمل<input id="adminHours" placeholder="مثال: يوميًا من 10 صباحًا إلى 10 مساءً"></label>
-        </div>
-        <button class="button button-gold" id="saveSettings">حفظ الإعدادات</button>
-        <hr>
-        <h3>إضافة منتج</h3>
-        <div class="form-grid">
-          <label>اسم المنتج<input id="pName" placeholder="اسم المنتج"></label>
-          <label>السعر بالجنيه المصري<input id="pPrice" type="number" min="0" placeholder="مثال: 250"></label>
-          <label>القسم<select id="pCategory"><option>رجالي</option><option>تيشيرتات</option><option>بناطيل</option><option>هوديز</option><option>أخرى</option></select></label>
-          <label>كود المنتج<input id="pCode" placeholder="اختياري"></label>
-          <label class="full-width">رابط صورة المنتج<input id="pImage" type="url" placeholder="https://..."></label>
-          <label class="full-width">وصف مختصر<input id="pDesc" placeholder="تفاصيل المنتج"></label>
-        </div>
-        <button class="button button-dark" id="addProduct">إضافة المنتج</button>
-        <button class="button button-light" id="resetDemo">استعادة المنتجات التجريبية</button>
-        <p class="notice">المنتجات والأسعار الافتراضية أمثلة للتجربة فقط، وليست مخزونًا أو أسعارًا مؤكدة للمتجر. استبدلها بالبيانات الحقيقية قبل النشر.</p>
-      </div>
-    </section>
   </main>
 
   <footer class="footer">
@@ -131,6 +105,7 @@
     </div>
   </div>
   <div id="toast" class="toast" role="status"></div>
+  <script src="catalog.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
