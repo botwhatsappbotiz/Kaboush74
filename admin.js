@@ -1,3 +1,5 @@
+const LOCAL_ADMIN_PASSWORD_HASH = '715c95ff1aad4ab7651363960f7e6cb12d169b56b45747f2c4e6cd43c5dd9bae';
+const OWNER_EMAIL = 'K.STORE@GMAIL.COM';
 const $ = id => document.getElementById(id);
 let imageProcessing = Promise.resolve();
 let products = [];
@@ -23,17 +25,16 @@ function showToast(message) {
 
 function renderAuth() {
   $('authTitle').textContent = 'دخول صاحب المتجر';
-  $('authDescription').textContent = 'سجّل الدخول إلى حساب الإدارة في Firebase.';
+  $('authDescription').textContent = 'أدخل كلمة مرور حساب الإدارة.';
   $('authForm').innerHTML = `
-    <label>البريد الإلكتروني<input id="adminEmail" type="email" autocomplete="username" required></label>
     <label>كلمة المرور<input id="adminPassword" type="password" autocomplete="current-password" required></label>
     <button class="button button-dark" type="submit">دخول</button>`;
   $('authForm').addEventListener('submit', authenticate);
   if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {
     $('authStatus').textContent = window.KABOUSH_STORE
-      ? window.KABOUSH_STORE.configurationMessage
-      : 'تعذر تحميل Firebase. تحقق من اتصال الإنترنت وإعداد ملفات الموقع.';
-    $('authForm').querySelector('button').disabled = true;
+      ? `${window.KABOUSH_STORE.configurationMessage} يمكنك الدخول محليًا، لكن التغييرات لن تظهر على الأجهزة الأخرى.`
+      : 'تعذر تحميل Firebase. تحقق من اتصال الإنترنت وإعداد ملفات الموقع. يمكنك الدخول محليًا، لكن التغييرات لن تظهر على الأجهزة الأخرى.';
+    $('authForm').querySelector('button').disabled = false;
   } else {
     $('authStatus').textContent = 'استخدم حساب الإدارة الذي أُنشئ في Firebase Authentication.';
   }
@@ -42,14 +43,46 @@ function renderAuth() {
 async function authenticate(event) {
   event.preventDefault();
   if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {
-    showToast('أكمل إعداد Firebase أولًا.');
+    try {
+      if (await passwordHash($('adminPassword').value) !== LOCAL_ADMIN_PASSWORD_HASH) {
+        showToast('كلمة المرور غير صحيحة.');
+        return;
+      }
+      sessionStorage.setItem('kaboush_admin_local_authenticated', 'true');
+      showLocalAdmin();
+    } catch (error) {
+      showToast(error.message);
+    }
     return;
   }
   try {
-    await window.KABOUSH_STORE.signIn($('adminEmail').value.trim(), $('adminPassword').value);
+    await window.KABOUSH_STORE.signIn(OWNER_EMAIL, $('adminPassword').value);
   } catch (error) {
     $('authStatus').textContent = `تعذر تسجيل الدخول إلى Firebase: ${error.code || error.message}`;
   }
+}
+
+async function passwordHash(password) {
+  if (!window.crypto || !window.crypto.subtle) {
+    throw new Error('يلزم فتح الموقع عبر HTTPS أو localhost لتسجيل الدخول.');
+  }
+  const bytes = new TextEncoder().encode(password);
+  const digest = await window.crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function showLocalAdmin() {
+  products = readStorage('kaboush_products', window.KABOUSH_DEMO_PRODUCTS);
+  settings = readStorage('kaboush_settings', {});
+  categories = readStorage('kaboush_categories', []);
+  $('authCard').classList.add('hidden');
+  $('adminContent').classList.remove('hidden');
+  $('adminSyncStatus').textContent = 'وضع محلي فقط — التغييرات محفوظة على هذا الجهاز ولا تتزامن مع بقية الأجهزة.';
+  $('adminWhatsapp').value = settings.whatsapp || '';
+  $('adminPhone').value = settings.phone || '';
+  $('adminHours').value = settings.hours || '';
+  renderCategories();
+  renderProducts();
 }
 
 async function showAdmin(user) {
@@ -283,6 +316,16 @@ $('settingsForm').addEventListener('submit', async event => {
     phone: $('adminPhone').value.trim(),
     hours: $('adminHours').value.trim()
   };
+  if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {
+    try {
+      localStorage.setItem('kaboush_settings', JSON.stringify(updatedSettings));
+      settings = updatedSettings;
+      showToast('تم حفظ بيانات التواصل على هذا الجهاز فقط.');
+    } catch {
+      showToast('تعذر حفظ الإعدادات في مساحة التخزين المحلية.');
+    }
+    return;
+  }
   try {
     await window.KABOUSH_STORE.saveSettings(updatedSettings);
     showToast('تم حفظ بيانات التواصل ومزامنتها.');
@@ -330,6 +373,24 @@ $('productForm').addEventListener('submit', async event => {
     sizes: oldId ? (products.find(item => item.id === oldId).sizes || ['M', 'L', 'XL']) : ['M', 'L', 'XL'],
     colors: oldId ? (products.find(item => item.id === oldId).colors || ['أسود', 'أبيض']) : ['أسود', 'أبيض']
   };
+  if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {
+    const updatedProducts = oldId
+      ? products.map(item => item.id === oldId ? product : item)
+      : [product, ...products];
+    try {
+      localStorage.setItem('kaboush_products', JSON.stringify(updatedProducts));
+      products = updatedProducts;
+      categories = [...new Set([...categories, product.category].filter(Boolean))];
+      localStorage.setItem('kaboush_categories', JSON.stringify(categories));
+      showToast(oldId ? 'تم تحديث المنتج على هذا الجهاز فقط.' : 'تمت إضافة المنتج على هذا الجهاز فقط.');
+      resetProductForm();
+      renderCategories();
+      renderProducts();
+    } catch {
+      showToast('تعذر حفظ المنتج محليًا؛ مساحة المتصفح غير كافية.');
+    }
+    return;
+  }
   let uploadedImagePath = '';
   if (image.startsWith('data:image/')) {
     try {
@@ -383,6 +444,18 @@ $('categoryForm').addEventListener('submit', async event => {
     showToast('هذا القسم موجود بالفعل.');
     return;
   }
+  if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {
+    categories = [...categories, name];
+    try {
+      localStorage.setItem('kaboush_categories', JSON.stringify(categories));
+      $('categoryForm').reset();
+      renderCategories();
+      showToast('تمت إضافة القسم على هذا الجهاز فقط.');
+    } catch {
+      showToast('تعذر حفظ القسم في مساحة التخزين المحلية.');
+    }
+    return;
+  }
   try {
     await window.KABOUSH_STORE.saveCategory(name);
     categories = [...categories, name];
@@ -403,6 +476,17 @@ $('categoryList').addEventListener('click', async event => {
     return;
   }
   if (!window.confirm(`هل تريد حذف قسم "${name}"؟`)) return;
+  if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {
+    categories = categories.filter(category => category !== name);
+    try {
+      localStorage.setItem('kaboush_categories', JSON.stringify(categories));
+      renderCategories();
+      showToast('تم حذف القسم من هذا الجهاز فقط.');
+    } catch {
+      showToast('تعذر تحديث الأقسام المحلية.');
+    }
+    return;
+  }
   try {
     await window.KABOUSH_STORE.removeCategory(name);
     categories = categories.filter(category => category !== name);
@@ -424,6 +508,22 @@ $('adminProductList').addEventListener('click', async event => {
   const id = deleteButton.dataset.deleteProduct;
   const product = products.find(item => item.id === id);
   if (!product || !window.confirm(`هل تريد حذف المنتج "${product.name}"؟`)) return;
+  if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {
+    products = products.filter(item => item.id !== id);
+    try {
+      localStorage.setItem('kaboush_products', JSON.stringify(products));
+      categories = allCategories();
+      localStorage.setItem('kaboush_categories', JSON.stringify(categories));
+      const localCart = readStorage('kaboush_cart', []);
+      localStorage.setItem('kaboush_cart', JSON.stringify(localCart.filter(item => item.id !== id)));
+      renderCategories();
+      renderProducts();
+      showToast('تم حذف المنتج من هذا الجهاز فقط.');
+    } catch {
+      showToast('تعذر تحديث بيانات المنتجات المحلية.');
+    }
+    return;
+  }
   try {
     const result = await window.KABOUSH_STORE.removeProduct(id);
     products = products.filter(item => item.id !== id);
@@ -440,6 +540,11 @@ $('adminProductList').addEventListener('click', async event => {
 });
 
 $('logoutButton').addEventListener('click', async () => {
+  if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {
+    sessionStorage.removeItem('kaboush_admin_local_authenticated');
+    window.location.reload();
+    return;
+  }
   unsubscribeStore.forEach(unsubscribe => unsubscribe());
   try {
     await window.KABOUSH_STORE.signOut();
@@ -456,6 +561,9 @@ function escapeHTML(value) {
 
 if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {
   renderAuth();
+  if (sessionStorage.getItem('kaboush_admin_local_authenticated') === 'true') {
+    showLocalAdmin();
+  }
 } else {
   renderAuth();
   window.KABOUSH_STORE.auth.onAuthStateChanged(user => {
@@ -465,6 +573,7 @@ if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {
       unsubscribeStore = [];
       $('adminContent').classList.add('hidden');
       $('authCard').classList.remove('hidden');
+      renderAuth();
     }
   }, handleCloudError);
 }

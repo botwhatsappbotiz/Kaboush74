@@ -6,8 +6,10 @@ GitHub Pages يستضيف ملفات الموقع فقط. Firebase يحفظ ال
 
 1. أنشئ مشروع Firebase، ثم أضف تطبيق Web وانسخ إعداداته إلى firebase-config.js.
    املأ apiKey وauthDomain وprojectId وstorageBucket وmessagingSenderId وappId.
-2. فعّل Authentication > Email/Password وأنشئ حساب صاحب المتجر. لا تنشئ صفحة
-   تسجيل حسابات عامة. أضف نطاق GitHub Pages إلى Authorized domains.
+2. فعّل Authentication > Email/Password وأنشئ حساب صاحب المتجر بالبريد
+   K.STORE@GMAIL.COM وكلمة المرور التي اخترتها. لا تحفظ كلمة المرور في ملفات
+   الموقع ولا تنشئ صفحة تسجيل حسابات عامة. أضف نطاق GitHub Pages إلى Authorized
+   domains.
 3. من Authentication، انسخ UID لحساب صاحب المتجر وضعه في ownerUid داخل
    firebase-config.js.
 4. أنشئ Cloud Firestore وفعّل Firebase Storage. انسخ firestore.rules إلى
