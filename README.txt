@@ -16,8 +16,8 @@ Important:
 1. Initial products and prices are demo examples, not verified inventory or current store prices.
 2. Enter the real WhatsApp number in admin.html. Use country code 20 and digits only, for example 201XXXXXXXXX.
 3. Open admin.html to manage products, categories, and store contact details. The prototype has a preset admin password.
-4. Product/settings/cart data are saved only in the current browser using localStorage. The password screen is only a prototype: visitors can bypass it or change browser data. Product and setting changes will not reach customer devices.
-5. Before public launch, connect a backend/database, cloud image storage, and server-side authenticated admin access. Serve the site over HTTPS.
+4. Product/settings/cart data and uploaded product images are saved only in the current browser using localStorage. Uploaded images are compressed before saving. The password screen is only a prototype: visitors can bypass it or change browser data. Product and setting changes will not reach customer devices.
+5. To share products and images across devices, connect a backend/database and cloud image storage, and use server-side authenticated admin access. Serve the site over HTTPS.
 6. The Google Maps directions button uses the coordinates supplied in the conversation: 26.1591885, 32.7239556.
 
 To publish:

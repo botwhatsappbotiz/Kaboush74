@@ -55,7 +55,9 @@
               <label><input type="radio" name="imageSource" value="url" checked> رابط صورة</label>
               <label><input type="radio" name="imageSource" value="upload"> رفع صورة</label>
               <label id="imageUrlField">رابط الصورة<input id="pImage" type="text" inputmode="url" required placeholder="https://..."></label>
-              <label id="imageUploadField" class="hidden">اختر صورة من جهازك<input id="pImageFile" type="file" accept="image/*"></label>
+              <label id="imageUploadField" class="hidden">اختر صورة من جهازك<input id="pImageFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></label>
+              <img id="imagePreview" class="image-preview hidden" alt="معاينة صورة المنتج">
+              <p id="imageStatus" class="admin-help full-width" role="status"></p>
             </fieldset>
           </div>
           <label class="full-width">وصف مختصر<input id="pDesc" maxlength="300" placeholder="تفاصيل المنتج"></label>
@@ -86,55 +88,6 @@
 
   <div id="toast" class="toast" role="status"></div>
   <script src="catalog.js"></script>
-  <script>
-    (() => {
-      const urlChoice = document.querySelector('input[name="imageSource"][value="url"]');
-      const uploadChoice = document.querySelector('input[name="imageSource"][value="upload"]');
-      const urlField = document.getElementById('imageUrlField');
-      const imageUrl = document.getElementById('pImage');
-      const uploadField = document.getElementById('imageUploadField');
-      const imageFile = document.getElementById('pImageFile');
-      const form = document.getElementById('productForm');
-      let imageReady = false;
-
-      function updateImageChoice() {
-        const uploading = uploadChoice.checked;
-        urlField.classList.toggle('hidden', uploading);
-        uploadField.classList.toggle('hidden', !uploading);
-        imageUrl.required = !uploading;
-        imageFile.required = uploading;
-      }
-
-      urlChoice.addEventListener('change', updateImageChoice);
-      uploadChoice.addEventListener('change', updateImageChoice);
-      imageFile.addEventListener('change', () => {
-        imageReady = false;
-        if (!imageFile.files.length) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-          imageUrl.value = reader.result;
-          imageReady = true;
-        };
-        reader.readAsDataURL(imageFile.files[0]);
-      });
-      form.addEventListener('submit', event => {
-        if (!uploadChoice.checked || imageReady) {
-          imageReady = false;
-          return;
-        }
-        event.preventDefault();
-        if (!imageFile.files.length) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-          imageUrl.value = reader.result;
-          imageReady = true;
-          form.requestSubmit(event.submitter || undefined);
-        };
-        reader.readAsDataURL(imageFile.files[0]);
-      }, true);
-      updateImageChoice();
-    })();
-  </script>
   <script src="admin.js"></script>
 </body>
 </html>
