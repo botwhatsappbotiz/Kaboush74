@@ -8,95 +8,97 @@
   <title>KABOUSH | سنتر كابوش</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="offers.css">
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="#home" aria-label="الصفحة الرئيسية">
-      <span class="brand-mark">K</span>
-      <span><strong>KABOUSH</strong><small>سنتر كابوش للملابس الجاهزة</small></span>
+      <span class="brand-mark" id="brandMark">K</span>
+      <span><strong id="headerStoreName">KABOUSH</strong><small id="headerTagline">سنتر كابوش للملابس الجاهزة</small></span>
     </a>
     <div class="top-actions">
       <button class="icon-button" id="cartTop" aria-label="قائمة الحجز">🛍️ <span id="cartCount">0</span></button>
-      <a class="icon-button" href="#contact" aria-label="تواصل معنا">☎</a>
+      <a class="icon-button" id="headerContactLink" href="#contact" aria-label="تواصل معنا">☎</a>
     </div>
   </header>
   <div class="cloud-status hidden" id="cloudStatus" role="status"></div>
 
   <main id="home" class="app-shell">
-    <section class="hero">
+    <section class="hero" id="heroSection">
       <div class="hero-copy">
-        <p class="eyebrow">KABOUSH · NEW SEASON</p>
-        <h1>ستايلك مش رفاهية،<br>ده شخصية.</h1>
-        <p>اكتشف الموديلات، اختار اللي يناسبك، واحجز بسهولة من خلال واتساب.</p>
-        <a class="button button-gold" href="#products">تصفح المنتجات <span>←</span></a>
+        <p class="eyebrow" id="heroEyebrow">KABOUSH · NEW SEASON</p>
+        <h1 id="heroTitle">ستايلك مش رفاهية،<br>ده شخصية.</h1>
+        <p id="heroDescription">اكتشف الموديلات، اختار اللي يناسبك، واحجز بسهولة من خلال واتساب.</p>
+        <a class="button button-gold" id="heroButton" href="#products">تصفح المنتجات <span>←</span></a>
       </div>
     </section>
 
-    <form class="search-bar" id="searchForm">
+    <form class="search-bar" id="searchForm" role="search">
       <input id="searchInput" type="search" placeholder="ابحث عن منتج أو كود..." aria-label="ابحث عن منتج">
-      <button class="button button-dark" type="submit">بحث</button>
+      <button class="button button-dark" id="searchButton" type="submit">بحث</button>
     </form>
 
-    <section class="section">
+    <section class="section" id="categoriesSection">
       <div class="section-heading">
-        <div><h2>تسوق حسب القسم</h2><p>اختار القسم وابدأ اكتشاف ستايلك</p></div>
+        <div><h2 id="categoryTitle">تسوق حسب القسم</h2><p id="categoryDescription">اختار القسم وابدأ اكتشاف ستايلك</p></div>
       </div>
       <div id="categoryChips" class="chips"></div>
     </section>
 
     <section class="section" id="products">
       <div class="section-heading">
-        <div><h2 id="productHeading">اختيارات كابوش</h2><p>تفاصيل واضحة وحجز سهل</p></div>
+        <div><h2 id="productHeading">اختيارات كابوش</h2><p id="productDescription">تفاصيل واضحة وحجز سهل</p></div>
         <button class="button button-light" id="showAll">عرض الكل</button>
       </div>
       <div id="productGrid" class="product-grid"></div>
     </section>
 
-    <section class="callout">
-      <div><h2>لقيت الموديل اللي عجبك؟</h2><p>اختار المقاس واللون، وابعت طلبك مباشرة لفريق كابوش على واتساب.</p></div>
+    <section class="callout" id="calloutSection">
+      <div><h2 id="calloutTitle">لقيت الموديل اللي عجبك؟</h2><p id="calloutDescription">اختار المقاس واللون، وابعت طلبك مباشرة لفريق كابوش على واتساب.</p></div>
       <button class="button button-gold" id="openCartCallout">عرض اختياراتي</button>
     </section>
 
     <section class="section" id="offers">
-      <div class="section-heading"><div><h2>العروض والخصومات</h2><p>تظهر العروض الفعلية عند إضافتها من لوحة الإدارة</p></div></div>
-      <div class="empty-state">✨ سيتم عرض العروض المتاحة هنا بعد إضافتها من لوحة الإدارة.</div>
+      <div class="section-heading"><div><h2 id="offerSectionTitle">العروض والخصومات</h2><p id="offerSectionDescription">تظهر العروض الفعلية عند إضافتها من لوحة الإدارة</p></div></div>
+      <div id="offerList" class="offer-grid"></div>
     </section>
 
     <section class="section" id="location">
-      <div class="section-heading"><div><h2>زورنا في المتجر</h2><p>افتح الاتجاهات إلى سنتر كابوش بسهولة</p></div></div>
+      <div class="section-heading"><div><h2 id="locationTitle">زورنا في المتجر</h2><p id="locationDescription">افتح الاتجاهات إلى سنتر كابوش بسهولة</p></div></div>
       <div class="info-grid">
-        <article class="info-card"><span class="info-icon">📍</span><h3>موقعنا</h3><p>سنتر كابوش للملابس الجاهزة<br>الموقع المحدد على خرائط Google</p></article>
-        <article class="info-card"><span class="info-icon">💬</span><h3>الحجز والاستفسار</h3><p>تواصل معنا عبر واتساب للاستفسار عن المنتجات والحجز.</p></article>
-        <article class="info-card"><span class="info-icon">🛍️</span><h3>اختار براحتك</h3><p>تصفح المنتجات، راجع المقاسات والأسعار، ثم أرسل تفاصيل الحجز.</p></article>
+        <article class="info-card"><span class="info-icon">📍</span><h3 id="locationCardTitle">موقعنا</h3><p id="locationCardDescription">سنتر كابوش للملابس الجاهزة<br>الموقع المحدد على خرائط Google</p></article>
+        <article class="info-card"><span class="info-icon">💬</span><h3 id="bookingCardTitle">الحجز والاستفسار</h3><p id="bookingCardDescription">تواصل معنا عبر واتساب للاستفسار عن المنتجات والحجز.</p></article>
+        <article class="info-card"><span class="info-icon">🛍️</span><h3 id="shoppingCardTitle">اختار براحتك</h3><p id="shoppingCardDescription">تصفح المنتجات، راجع المقاسات والأسعار، ثم أرسل تفاصيل الحجز.</p></article>
       </div>
       <div class="map-card">
-        <div><span class="map-pin">📍</span><h3>سنتر كابوش للملابس الجاهزة</h3><p>26.1591885, 32.7239556</p>
-        <a class="button button-gold" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=26.1591885,32.7239556">افتح الاتجاهات على Google Maps ↗</a></div>
+        <div><span class="map-pin">📍</span><h3 id="mapTitle">سنتر كابوش للملابس الجاهزة</h3><p id="mapCoordinates">26.1591885, 32.7239556</p>
+        <a class="button button-gold" id="mapButton" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=26.1591885,32.7239556">افتح الاتجاهات على Google Maps ↗</a></div>
       </div>
     </section>
 
     <section class="section" id="contact">
-      <div class="section-heading"><div><h2>تواصل معنا</h2><p>نحن هنا لمساعدتك في اختيار موديلك</p></div></div>
+      <div class="section-heading"><div><h2 id="contactTitle">تواصل معنا</h2><p id="contactDescription">نحن هنا لمساعدتك في اختيار موديلك</p></div></div>
       <div class="info-grid">
-        <article class="info-card"><span class="info-icon">📞</span><h3>اتصال مباشر</h3><p id="phoneText">رقم الهاتف يُضاف من إعدادات المتجر.</p><a id="phoneLink" class="button button-light hidden" href="#">اتصل الآن</a></article>
-        <article class="info-card"><span class="info-icon">🟢</span><h3>واتساب</h3><p id="whatsappText">أضف رقم واتساب الحقيقي لتفعيل الحجز.</p><button class="button button-green" id="contactWhatsApp">محادثة واتساب</button></article>
-        <article class="info-card"><span class="info-icon">🕒</span><h3>مواعيد العمل</h3><p id="hoursText">تُضاف مواعيد العمل المؤكدة من إعدادات المتجر.</p></article>
+        <article class="info-card"><span class="info-icon">📞</span><h3 id="phoneCardTitle">اتصال مباشر</h3><p id="phoneText">رقم الهاتف يُضاف من إعدادات المتجر.</p><a id="phoneLink" class="button button-light hidden" href="#">اتصل الآن</a></article>
+        <article class="info-card"><span class="info-icon">🟢</span><h3 id="whatsappCardTitle">واتساب</h3><p id="whatsappText">أضف رقم واتساب الحقيقي لتفعيل الحجز.</p><button class="button button-green" id="contactWhatsApp">محادثة واتساب</button></article>
+        <article class="info-card"><span class="info-icon">🕒</span><h3 id="hoursCardTitle">مواعيد العمل</h3><p id="hoursText">تُضاف مواعيد العمل المؤكدة من إعدادات المتجر.</p></article>
       </div>
     </section>
 
+    <div id="customSections"></div>
   </main>
 
   <footer class="footer">
-    <div class="brand footer-brand"><span class="brand-mark">K</span><span><strong>KABOUSH</strong><small>سنتر كابوش للملابس الجاهزة</small></span></div>
-    <p>اختار ستايلك، وتواصل معنا لحجز موديلك.<br>© <span id="year"></span> KABOUSH</p>
+    <div class="brand footer-brand"><span class="brand-mark">K</span><span><strong id="footerStoreName">KABOUSH</strong><small id="footerTagline">سنتر كابوش للملابس الجاهزة</small></span></div>
+    <p><span id="footerDescription">اختار ستايلك، وتواصل معنا لحجز موديلك.</span><br>© <span id="year"></span> <span id="footerCopyrightName">KABOUSH</span></p>
   </footer>
 
   <nav class="bottom-nav" aria-label="التنقل الرئيسي">
-    <a class="nav-item active" href="#home"><span>⌂</span>الرئيسية</a>
-    <a class="nav-item" href="#products"><span>▦</span>المنتجات</a>
-    <a class="nav-item" href="#offers"><span>％</span>العروض</a>
-    <button class="nav-item" id="cartNav"><span>♡</span>اختياراتي</button>
-    <a class="nav-item" href="#location"><span>⌖</span>موقعنا</a>
+    <a class="nav-item active" href="#home"><span>⌂</span><span id="navHomeLabel">الرئيسية</span></a>
+    <a class="nav-item" href="#products"><span>▦</span><span id="navProductsLabel">المنتجات</span></a>
+    <a class="nav-item" href="#offers"><span>％</span><span id="navOffersLabel">العروض</span></a>
+    <button class="nav-item" id="cartNav"><span>♡</span><span id="navCartLabel">اختياراتي</span></button>
+    <a class="nav-item" href="#location"><span>⌖</span><span id="navLocationLabel">موقعنا</span></a>
   </nav>
 
   <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
@@ -107,8 +109,11 @@
   </div>
   <div id="toast" class="toast" role="status"></div>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
   <script src="firebase-config.js"></script>
+  <script src="site-content.js"></script>
   <script src="firebase-store.js"></script>
   <script src="catalog.js"></script>
   <script src="app.js"></script>

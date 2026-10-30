@@ -5,7 +5,145 @@ let imageProcessing = Promise.resolve();
 let products = [];
 let settings = {};
 let categories = [];
+let offers = [];
 let unsubscribeStore = [];
+const siteDefaults = window.KABOUSH_SITE_DEFAULTS || {};
+
+const siteContentGroups = [
+  {
+    title: 'هوية المتجر والواجهة الرئيسية',
+    fields: [
+      ['storeName', 'اسم المتجر'], ['tagline', 'وصف المتجر المختصر'],
+      ['heroEyebrow', 'العبارة الصغيرة أعلى الواجهة'], ['heroImage', 'رابط صورة الواجهة'],
+      ['heroTitle', 'عنوان الواجهة الرئيسية', 'textarea'],
+      ['heroDescription', 'وصف الواجهة الرئيسية', 'textarea'], ['heroButton', 'نص زر الواجهة'],
+      ['footerDescription', 'عبارة تذييل الصفحة', 'textarea']
+    ]
+  },
+  {
+    title: 'البحث والأقسام والمنتجات',
+    fields: [
+      ['searchPlaceholder', 'نص البحث التوضيحي'], ['searchButton', 'زر البحث'],
+      ['categoryTitle', 'عنوان الأقسام'], ['categoryDescription', 'وصف الأقسام', 'textarea'],
+      ['productTitle', 'عنوان المنتجات'], ['productDescription', 'وصف المنتجات', 'textarea'],
+      ['showAllButton', 'زر عرض جميع المنتجات']
+    ]
+  },
+  {
+    title: 'التنويه والعروض',
+    fields: [
+      ['calloutTitle', 'عنوان التنويه'], ['calloutDescription', 'وصف التنويه', 'textarea'],
+      ['calloutButton', 'زر التنويه'], ['offerTitle', 'عنوان العروض'],
+      ['offerDescription', 'وصف العروض', 'textarea'], ['offerEmptyText', 'النص عند عدم وجود عروض']
+    ]
+  },
+  {
+    title: 'معلومات المتجر والخريطة',
+    fields: [
+      ['locationTitle', 'عنوان قسم الموقع'], ['locationDescription', 'وصف قسم الموقع', 'textarea'],
+      ['locationCardTitle', 'عنوان بطاقة الموقع'], ['locationCardDescription', 'وصف بطاقة الموقع', 'textarea'],
+      ['bookingCardTitle', 'عنوان بطاقة الحجز'], ['bookingCardDescription', 'وصف بطاقة الحجز', 'textarea'],
+      ['shoppingCardTitle', 'عنوان بطاقة التسوق'], ['shoppingCardDescription', 'وصف بطاقة التسوق', 'textarea'],
+      ['mapTitle', 'اسم الموقع على الخريطة'], ['mapLatitude', 'خط العرض'],
+      ['mapLongitude', 'خط الطول'], ['mapButton', 'نص زر الاتجاهات']
+    ]
+  },
+  {
+    title: 'التواصل والتذييل',
+    fields: [
+      ['contactTitle', 'عنوان التواصل'], ['contactDescription', 'وصف التواصل', 'textarea'],
+      ['phoneCardTitle', 'عنوان بطاقة الهاتف'], ['phoneFallback', 'النص عند عدم إضافة الهاتف'],
+      ['phoneLinkLabel', 'نص زر الاتصال'], ['whatsappCardTitle', 'عنوان بطاقة واتساب'],
+      ['whatsappFallback', 'النص عند عدم إضافة واتساب'], ['whatsappButtonLabel', 'نص زر واتساب'],
+      ['hoursCardTitle', 'عنوان بطاقة مواعيد العمل'], ['hoursFallback', 'النص عند عدم إضافة المواعيد'],
+      ['headerCartLabel', 'وصف زر الحجز في أعلى الصفحة'], ['headerContactLabel', 'وصف زر التواصل في أعلى الصفحة'],
+      ['navHomeLabel', 'رابط الرئيسية'], ['navProductsLabel', 'رابط المنتجات'],
+      ['navOffersLabel', 'رابط العروض'], ['navCartLabel', 'رابط قائمة الحجز'],
+      ['navLocationLabel', 'رابط الموقع']
+    ]
+  }
+];
+
+const siteVisibilityFields = [
+  ['showHero', 'الواجهة الرئيسية'],
+  ['showSearch', 'البحث'],
+  ['showCategories', 'الأقسام'],
+  ['showProducts', 'المنتجات'],
+  ['showCallout', 'التنويه'],
+  ['showOffers', 'العروض'],
+  ['showLocation', 'الموقع والخريطة'],
+  ['showContact', 'التواصل']
+];
+
+function renderSiteContentForm() {
+  const content = { ...siteDefaults, ...settings };
+  $('siteContentFields').innerHTML = siteContentGroups.map(group => `
+    <details class="site-content-group" open>
+      <summary>${escapeHTML(group.title)}</summary>
+      <div class="site-content-grid">${group.fields.map(([key, label, type]) => `
+        <label class="${type === 'textarea' ? 'full-width' : ''}">${escapeHTML(label)}
+          ${type === 'textarea'
+            ? `<textarea data-site-content="${key}" rows="2" maxlength="300">${escapeHTML(content[key] ?? '')}</textarea>`
+            : `<input data-site-content="${key}" ${key === 'mapLatitude' || key === 'mapLongitude' ? 'type="number" step="any"' : 'type="text"'} maxlength="150" value="${escapeHTML(content[key] ?? '')}">`}
+        </label>`).join('')}</div>
+    </details>`).join('') + `
+    <fieldset class="site-content-group">
+      <legend>الأقسام الظاهرة في صفحة المتجر</legend>
+      <div class="site-visibility-grid">${siteVisibilityFields.map(([key, label]) => `
+        <label class="site-visibility-option"><input type="checkbox" data-site-content="${key}" ${content[key] ? 'checked' : ''}>${escapeHTML(label)}</label>
+      `).join('')}</div>
+    </fieldset>`;
+}
+
+function renderCustomSections() {
+  const sections = Array.isArray(settings.customSections) ? settings.customSections : [];
+  $('customSectionList').innerHTML = sections.length
+    ? sections.map(section => `<article class="custom-section-row">
+        <div><strong>${escapeHTML(section.title)}</strong><p>${escapeHTML(section.description)}</p></div>
+        <div class="admin-product-actions">
+          <button class="button button-light" type="button" data-edit-custom-section="${escapeHTML(section.id)}">تعديل</button>
+          <button class="button button-danger" type="button" data-delete-custom-section="${escapeHTML(section.id)}">حذف</button>
+        </div>
+      </article>`).join('')
+    : '<div class="empty-state">لا توجد أقسام إضافية.</div>';
+}
+
+function resetCustomSectionForm() {
+  $('customSectionForm').reset();
+  $('customSectionId').value = '';
+  $('saveCustomSectionButton').textContent = 'إضافة القسم';
+  $('cancelCustomSectionButton').classList.add('hidden');
+}
+
+function readSiteContentForm() {
+  const content = {};
+  $('siteContentFields').querySelectorAll('[data-site-content]').forEach(input => {
+    content[input.dataset.siteContent] = input.type === 'checkbox' ? input.checked : input.value.trim();
+  });
+  return content;
+}
+
+async function saveStoreSettings(updatedSettings, errorLabel) {
+  const mergedSettings = { ...settings, ...updatedSettings };
+  if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {
+    try {
+      localStorage.setItem('kaboush_settings', JSON.stringify(mergedSettings));
+      settings = mergedSettings;
+      return true;
+    } catch {
+      showToast('تعذر حفظ الإعدادات في مساحة التخزين المحلية.');
+      return false;
+    }
+  }
+  try {
+    await window.KABOUSH_STORE.saveSettings(mergedSettings);
+    settings = mergedSettings;
+    return true;
+  } catch (error) {
+    showToast(`تعذر حفظ ${errorLabel} في Firebase: ${error.message}`);
+    return false;
+  }
+}
 
 function readStorage(key, fallback) {
   try {
@@ -75,14 +213,18 @@ function showLocalAdmin() {
   products = readStorage('kaboush_products', window.KABOUSH_DEMO_PRODUCTS);
   settings = readStorage('kaboush_settings', {});
   categories = readStorage('kaboush_categories', []);
+  offers = readStorage('kaboush_offers', []);
   $('authCard').classList.add('hidden');
   $('adminContent').classList.remove('hidden');
   $('adminSyncStatus').textContent = 'وضع محلي فقط — التغييرات محفوظة على هذا الجهاز ولا تتزامن مع بقية الأجهزة.';
   $('adminWhatsapp').value = settings.whatsapp || '';
   $('adminPhone').value = settings.phone || '';
   $('adminHours').value = settings.hours || '';
+  renderSiteContentForm();
   renderCategories();
   renderProducts();
+  renderOffers();
+  renderCustomSections();
 }
 
 async function showAdmin(user) {
@@ -115,11 +257,17 @@ async function showAdmin(user) {
         categories = items;
         renderCategories();
       }, handleCloudError),
+      window.KABOUSH_STORE.watchOffers(items => {
+        offers = items;
+        renderOffers();
+      }, handleCloudError),
       window.KABOUSH_STORE.watchSettings(items => {
         settings = items;
         $('adminWhatsapp').value = settings.whatsapp || '';
         $('adminPhone').value = settings.phone || '';
         $('adminHours').value = settings.hours || '';
+        renderSiteContentForm();
+        renderCustomSections();
       }, handleCloudError)
     ];
     $('adminSyncStatus').textContent = 'متصل بقاعدة Firebase · التغييرات تتزامن مع جميع الأجهزة';
@@ -145,28 +293,64 @@ function renderCategories() {
   ).join('');
   $('categoryList').innerHTML = names.length
     ? names.map(name => {
-      const inUse = products.some(product => product.category === name);
-      return `<div class="category-row"><span>${escapeHTML(name)}</span><button class="button button-light" type="button" data-delete-category="${escapeHTML(name)}" ${inUse ? 'disabled title="انقل أو احذف المنتجات التابعة للقسم أولًا"' : ''}>حذف القسم</button></div>`;
+      const categoryProducts = products.filter(product => product.category === name);
+      return `<div class="category-row">
+        <div class="category-row-heading">
+          <div class="category-row-info"><strong>${escapeHTML(name)}</strong><small>${categoryProducts.length} منتج</small></div>
+        <div class="category-row-actions">
+          <button class="button button-light" type="button" data-edit-category="${escapeHTML(name)}">تعديل الاسم</button>
+          <button class="button button-danger" type="button" data-delete-category="${escapeHTML(name)}">حذف القسم</button>
+        </div>
+        </div>
+        <div class="category-products">${categoryProducts.length
+          ? categoryProducts.map(renderAdminProduct).join('')
+          : '<p class="admin-help">لا توجد منتجات في هذا القسم.</p>'}
+        </div>
+      </div>`;
     }).join('')
-    : '<div class="empty-state">لا توجد أقسام بعد.</div>';
+    : '';
+  const uncategorizedProducts = products.filter(product => !product.category);
+  if (uncategorizedProducts.length) {
+    $('categoryList').innerHTML += `<div class="category-row">
+      <div class="category-row-heading"><div class="category-row-info"><strong>منتجات بلا قسم</strong><small>${uncategorizedProducts.length} منتج</small></div></div>
+      <div class="category-products">${uncategorizedProducts.map(renderAdminProduct).join('')}</div>
+    </div>`;
+  }
+  if (!names.length && !uncategorizedProducts.length) {
+    $('categoryList').innerHTML = '<div class="empty-state">لا توجد أقسام أو منتجات بعد.</div>';
+  }
+}
+
+function renderAdminProduct(product) {
+  return `<article class="admin-product">
+    <img src="${escapeHTML(product.image)}" alt="${escapeHTML(product.name)}" onerror="this.hidden=true">
+    <div class="admin-product-info">
+      <strong>${escapeHTML(product.name)}</strong>
+      <span>${Number(product.price).toLocaleString('en-US')} ج.م</span>
+      <small>الكود: ${escapeHTML(product.id)}</small>
+    </div>
+    <div class="admin-product-actions">
+      <button class="button button-light" type="button" data-edit-product="${escapeHTML(product.id)}">تعديل</button>
+      <button class="button button-danger" type="button" data-delete-product="${escapeHTML(product.id)}">حذف</button>
+    </div>
+  </article>`;
 }
 
 function renderProducts() {
   $('productCount').textContent = `${products.length} منتج`;
-  $('adminProductList').innerHTML = products.length
-    ? products.map(product => `<article class="admin-product">
-        <img src="${escapeHTML(product.image)}" alt="${escapeHTML(product.name)}" onerror="this.hidden=true">
-        <div class="admin-product-info">
-          <strong>${escapeHTML(product.name)}</strong>
-          <span>${escapeHTML(product.category)} · ${Number(product.price).toLocaleString('en-US')} ج.م</span>
-          <small>الكود: ${escapeHTML(product.id)}</small>
+}
+
+function renderOffers() {
+  $('adminOfferList').innerHTML = offers.length
+    ? offers.map(offer => `<article class="admin-offer">
+        <div class="admin-offer-info">
+          <strong>${escapeHTML(offer.title)}</strong>
+          <span>${escapeHTML(offer.description)}</span>
+          <small>${offer.discount ? `خصم ${Number(offer.discount)}٪` : 'عرض خاص'}${offer.endDate ? ` · صالح حتى ${escapeHTML(offer.endDate)}` : ''}</small>
         </div>
-        <div class="admin-product-actions">
-          <button class="button button-light" type="button" data-edit-product="${escapeHTML(product.id)}">تعديل</button>
-          <button class="button button-danger" type="button" data-delete-product="${escapeHTML(product.id)}">حذف</button>
-        </div>
+        <button class="button button-danger" type="button" data-delete-offer="${escapeHTML(offer.id)}">حذف العرض</button>
       </article>`).join('')
-    : '<div class="empty-state">لا توجد منتجات.</div>';
+    : '<div class="empty-state">لا توجد عروض مضافة.</div>';
 }
 
 function resetProductForm() {
@@ -316,21 +500,92 @@ $('settingsForm').addEventListener('submit', async event => {
     phone: $('adminPhone').value.trim(),
     hours: $('adminHours').value.trim()
   };
-  if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {
-    try {
-      localStorage.setItem('kaboush_settings', JSON.stringify(updatedSettings));
-      settings = updatedSettings;
-      showToast('تم حفظ بيانات التواصل على هذا الجهاز فقط.');
-    } catch {
-      showToast('تعذر حفظ الإعدادات في مساحة التخزين المحلية.');
-    }
+  if (await saveStoreSettings(updatedSettings, 'بيانات التواصل')) {
+    showToast(window.KABOUSH_STORE && window.KABOUSH_STORE.isConfigured
+      ? 'تم حفظ بيانات التواصل ومزامنتها.'
+      : 'تم حفظ بيانات التواصل على هذا الجهاز فقط.');
+  }
+});
+
+$('siteContentForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  const updatedContent = readSiteContentForm();
+  let heroImageUrl;
+  try {
+    heroImageUrl = new URL(updatedContent.heroImage);
+  } catch {
+    showToast('أدخل رابط صورة صحيحًا للواجهة الرئيسية.');
     return;
   }
-  try {
-    await window.KABOUSH_STORE.saveSettings(updatedSettings);
-    showToast('تم حفظ بيانات التواصل ومزامنتها.');
-  } catch (error) {
-    showToast(`تعذر حفظ بيانات التواصل: ${error.message}`);
+  if (!['https:', 'http:'].includes(heroImageUrl.protocol)
+    || !updatedContent.mapLatitude || !updatedContent.mapLongitude) {
+    showToast('أدخل رابط صورة يبدأ بـ http أو https وإحداثيات صحيحة للموقع.');
+    return;
+  }
+  const latitude = Number(updatedContent.mapLatitude);
+  const longitude = Number(updatedContent.mapLongitude);
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90
+    || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    showToast('أدخل إحداثيات صحيحة: خط العرض من -90 إلى 90 وخط الطول من -180 إلى 180.');
+    return;
+  }
+  if (await saveStoreSettings(updatedContent, 'محتوى صفحة المتجر')) {
+    renderSiteContentForm();
+    showToast(window.KABOUSH_STORE && window.KABOUSH_STORE.isConfigured
+      ? 'تم حفظ محتوى الصفحة ومزامنته مع المتجر.'
+      : 'تم حفظ محتوى الصفحة على هذا الجهاز فقط.');
+  }
+});
+
+$('customSectionForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  const id = $('customSectionId').value || `section-${Date.now()}-${crypto.randomUUID()}`;
+  const section = {
+    id,
+    title: $('customSectionTitle').value.trim(),
+    description: $('customSectionDescription').value.trim()
+  };
+  const sections = Array.isArray(settings.customSections) ? settings.customSections : [];
+  const updatedSections = $('customSectionId').value
+    ? sections.map(item => item.id === id ? section : item)
+    : [section, ...sections];
+  if (await saveStoreSettings({ customSections: updatedSections }, 'القسم الإضافي')) {
+    settings.customSections = updatedSections;
+    resetCustomSectionForm();
+    renderCustomSections();
+    showToast(window.KABOUSH_STORE && window.KABOUSH_STORE.isConfigured
+      ? 'تم حفظ القسم الإضافي ومزامنته.'
+      : 'تم حفظ القسم الإضافي على هذا الجهاز فقط.');
+  }
+});
+
+$('cancelCustomSectionButton').addEventListener('click', resetCustomSectionForm);
+
+$('customSectionList').addEventListener('click', async event => {
+  const editButton = event.target.closest('[data-edit-custom-section]');
+  if (editButton) {
+    const section = (settings.customSections || []).find(item => item.id === editButton.dataset.editCustomSection);
+    if (!section) return;
+    $('customSectionId').value = section.id;
+    $('customSectionTitle').value = section.title;
+    $('customSectionDescription').value = section.description;
+    $('saveCustomSectionButton').textContent = 'حفظ التعديلات';
+    $('cancelCustomSectionButton').classList.remove('hidden');
+    $('customSectionTitle').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  const deleteButton = event.target.closest('[data-delete-custom-section]');
+  if (!deleteButton) return;
+  const sections = Array.isArray(settings.customSections) ? settings.customSections : [];
+  const section = sections.find(item => item.id === deleteButton.dataset.deleteCustomSection);
+  if (!section || !window.confirm(`هل تريد حذف القسم "${section.title}"؟`)) return;
+  const updatedSections = sections.filter(item => item.id !== section.id);
+  if (await saveStoreSettings({ customSections: updatedSections }, 'القسم الإضافي')) {
+    settings.customSections = updatedSections;
+    renderCustomSections();
+    showToast(window.KABOUSH_STORE && window.KABOUSH_STORE.isConfigured
+      ? 'تم حذف القسم الإضافي من المتجر.'
+      : 'تم حذف القسم الإضافي من هذا الجهاز.');
   }
 });
 
@@ -468,6 +723,72 @@ $('categoryForm').addEventListener('submit', async event => {
 });
 
 $('categoryList').addEventListener('click', async event => {
+  const editProductButton = event.target.closest('[data-edit-product]');
+  if (editProductButton) {
+    editProduct(editProductButton.dataset.editProduct);
+    return;
+  }
+  const deleteProductButton = event.target.closest('[data-delete-product]');
+  if (deleteProductButton) {
+    await removeAdminProduct(deleteProductButton.dataset.deleteProduct);
+    return;
+  }
+  const editButton = event.target.closest('[data-edit-category]');
+  if (editButton) {
+    const oldName = editButton.dataset.editCategory;
+    const newName = window.prompt('اكتب اسم القسم الجديد:', oldName);
+    if (newName === null) return;
+    const trimmedName = newName.trim();
+    if (!trimmedName || trimmedName.length > 50 || trimmedName === 'الكل') {
+      showToast('أدخل اسم قسم صالحًا.');
+      return;
+    }
+    if (trimmedName === oldName) return;
+    if (allCategories().some(category =>
+      category !== oldName && category.toLocaleLowerCase() === trimmedName.toLocaleLowerCase()
+    )) {
+      showToast('يوجد قسم آخر بهذا الاسم بالفعل.');
+      return;
+    }
+    const editingProductFromCategory = products.some(product =>
+      product.id === $('productId').value && product.category === oldName
+    );
+    const updatedProducts = products.map(product =>
+      product.category === oldName ? { ...product, category: trimmedName } : product
+    );
+    if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {
+      const updatedCategories = categories.map(category => category === oldName ? trimmedName : category);
+      try {
+        localStorage.setItem('kaboush_products', JSON.stringify(updatedProducts));
+        localStorage.setItem('kaboush_categories', JSON.stringify(updatedCategories));
+        products = updatedProducts;
+        categories = updatedCategories;
+        renderCategories();
+        renderProducts();
+        if (editingProductFromCategory) $('pCategory').value = trimmedName;
+        showToast('تم تعديل اسم القسم والمنتجات التابعة له على هذا الجهاز فقط.');
+      } catch {
+        showToast('تعذر حفظ تعديل القسم في مساحة التخزين المحلية.');
+      }
+      return;
+    }
+    try {
+      await window.KABOUSH_STORE.renameCategory(
+        oldName,
+        trimmedName,
+        products.filter(product => product.category === oldName).map(product => product.id)
+      );
+      products = updatedProducts;
+      categories = categories.map(category => category === oldName ? trimmedName : category);
+      renderCategories();
+      renderProducts();
+      if (editingProductFromCategory) $('pCategory').value = trimmedName;
+      showToast('تم تعديل اسم القسم وتحديث المنتجات التابعة له.');
+    } catch (error) {
+      showToast(`تعذر تعديل القسم في Firebase: ${error.message}`);
+    }
+    return;
+  }
   const button = event.target.closest('[data-delete-category]');
   if (!button) return;
   const name = button.dataset.deleteCategory;
@@ -497,15 +818,75 @@ $('categoryList').addEventListener('click', async event => {
   }
 });
 
-$('adminProductList').addEventListener('click', async event => {
-  const editButton = event.target.closest('[data-edit-product]');
-  if (editButton) {
-    editProduct(editButton.dataset.editProduct);
+$('offerForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  const title = $('offerTitle').value.trim();
+  const description = $('offerDescription').value.trim();
+  const discountValue = $('offerDiscount').value;
+  const discount = discountValue ? Number(discountValue) : null;
+  const endDate = $('offerEndDate').value;
+  if (!title || !description || (discount !== null && (!Number.isInteger(discount) || discount < 1 || discount > 100))) {
+    showToast('أدخل عنوانًا وتفاصيل صحيحة، واجعل نسبة الخصم بين 1 و100.');
     return;
   }
-  const deleteButton = event.target.closest('[data-delete-product]');
-  if (!deleteButton) return;
-  const id = deleteButton.dataset.deleteProduct;
+  const offer = {
+    id: `offer-${Date.now()}-${crypto.randomUUID()}`,
+    title,
+    description,
+    discount,
+    endDate
+  };
+  if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {
+    try {
+      offers = [offer, ...offers];
+      localStorage.setItem('kaboush_offers', JSON.stringify(offers));
+      $('offerForm').reset();
+      renderOffers();
+      showToast('تمت إضافة العرض على هذا الجهاز فقط.');
+    } catch {
+      offers = offers.filter(item => item.id !== offer.id);
+      showToast('تعذر حفظ العرض في مساحة التخزين المحلية.');
+    }
+    return;
+  }
+  try {
+    await window.KABOUSH_STORE.saveOffer(offer);
+    $('offerForm').reset();
+    showToast('تمت إضافة العرض ومزامنته.');
+  } catch (error) {
+    showToast(`تعذر حفظ العرض في Firebase: ${error.message}`);
+  }
+});
+
+$('adminOfferList').addEventListener('click', async event => {
+  const button = event.target.closest('[data-delete-offer]');
+  if (!button) return;
+  const id = button.dataset.deleteOffer;
+  const offer = offers.find(item => item.id === id);
+  if (!offer || !window.confirm(`هل تريد حذف العرض "${offer.title}"؟`)) return;
+  if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {
+    const updatedOffers = offers.filter(item => item.id !== id);
+    try {
+      localStorage.setItem('kaboush_offers', JSON.stringify(updatedOffers));
+      offers = updatedOffers;
+      renderOffers();
+      showToast('تم حذف العرض من هذا الجهاز فقط.');
+    } catch {
+      showToast('تعذر تحديث العروض المحلية.');
+    }
+    return;
+  }
+  try {
+    await window.KABOUSH_STORE.removeOffer(id);
+    offers = offers.filter(item => item.id !== id);
+    renderOffers();
+    showToast('تم حذف العرض من المتجر.');
+  } catch (error) {
+    showToast(`تعذر حذف العرض من Firebase: ${error.message}`);
+  }
+});
+
+async function removeAdminProduct(id) {
   const product = products.find(item => item.id === id);
   if (!product || !window.confirm(`هل تريد حذف المنتج "${product.name}"؟`)) return;
   if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {
@@ -537,7 +918,7 @@ $('adminProductList').addEventListener('click', async event => {
   } catch (error) {
     showToast(`تعذر حذف المنتج من Firebase: ${error.message}`);
   }
-});
+}
 
 $('logoutButton').addEventListener('click', async () => {
   if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {

@@ -16,6 +16,11 @@ service cloud.firestore {
       allow create, update, delete: if isOwner();
     }
 
+    match /offers/{offerId} {
+      allow read: if true;
+      allow create, update, delete: if isOwner();
+    }
+
     match /store/{documentId} {
       allow read: if true;
       allow create, update, delete: if isOwner();

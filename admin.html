@@ -7,6 +7,8 @@
   <title>إدارة المتجر | KABOUSH</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="admin-content.css">
+  <link rel="stylesheet" href="offers.css">
 </head>
 <body class="admin-page">
   <header class="topbar">
@@ -30,8 +32,39 @@
         <div><h1>لوحة إدارة المتجر</h1><p id="adminSyncStatus">جارٍ الاتصال بقاعدة البيانات...</p></div>
         <button class="button button-light" id="logoutButton" type="button">تسجيل الخروج</button>
       </div>
+      <nav class="admin-nav" aria-label="أقسام لوحة الإدارة">
+        <a href="#admin-site-content">محتوى الصفحة</a>
+        <a href="#admin-custom-sections">أقسام إضافية</a>
+        <a href="#admin-products">المنتجات</a>
+        <a href="#admin-catalog">الأقسام والكتالوج</a>
+        <a href="#admin-offers">العروض</a>
+        <a href="#admin-contact">التواصل</a>
+      </nav>
 
-      <section class="admin-card">
+      <section class="admin-card" id="admin-site-content">
+        <div class="section-heading"><div><h2>محتوى وتصميم صفحة المتجر</h2><p>تحكم في النصوص والعناوين ومعلومات الموقع، وحدد الأقسام الظاهرة للزوار.</p></div></div>
+        <form id="siteContentForm" class="site-content-form">
+          <div id="siteContentFields"></div>
+          <div class="full-width"><button class="button button-gold" type="submit">حفظ محتوى الصفحة</button></div>
+        </form>
+      </section>
+
+      <section class="admin-card" id="admin-custom-sections">
+        <h2>أقسام ومحتوى إضافي</h2>
+        <p class="admin-help">أضف أقسامًا جديدة إلى صفحة المتجر، مثل نبذة عن المتجر أو تعليمات الطلب.</p>
+        <form id="customSectionForm" class="form-grid">
+          <input id="customSectionId" type="hidden">
+          <label>عنوان القسم<input id="customSectionTitle" required maxlength="100" placeholder="مثال: من نحن"></label>
+          <label class="full-width">محتوى القسم<textarea id="customSectionDescription" required maxlength="1000" rows="3" placeholder="اكتب المحتوى الذي سيظهر للعملاء"></textarea></label>
+          <div class="full-width admin-form-actions">
+            <button class="button button-dark" id="saveCustomSectionButton" type="submit">إضافة القسم</button>
+            <button class="button button-light hidden" id="cancelCustomSectionButton" type="button">إلغاء التعديل</button>
+          </div>
+        </form>
+        <div id="customSectionList" class="custom-section-list"></div>
+      </section>
+
+      <section class="admin-card" id="admin-contact">
         <h2>بيانات التواصل</h2>
         <form id="settingsForm" class="form-grid">
           <label>رقم واتساب مع مفتاح الدولة<input id="adminWhatsapp" inputmode="numeric" placeholder="201XXXXXXXXX"></label>
@@ -41,7 +74,7 @@
         </form>
       </section>
 
-      <section class="admin-card">
+      <section class="admin-card" id="admin-products">
         <h2 id="productFormTitle">إضافة منتج</h2>
         <form id="productForm" class="form-grid">
           <input id="productId" type="hidden">
@@ -68,21 +101,30 @@
         </form>
       </section>
 
-      <section class="admin-card">
-        <h2>الأقسام</h2>
+      <section class="admin-card" id="admin-catalog">
+        <h2>الأقسام والمنتجات</h2>
         <form id="categoryForm" class="category-form">
           <label class="sr-only" for="categoryName">اسم القسم الجديد</label>
           <input id="categoryName" required maxlength="50" placeholder="اسم القسم الجديد">
           <button class="button button-dark" type="submit">إضافة قسم</button>
         </form>
-        <p class="admin-help">لا يمكن حذف قسم يحتوي على منتجات؛ انقل منتجاته إلى قسم آخر أو احذفها أولًا.</p>
+        <p class="admin-help">كل المنتجات الحالية مرتبة تحت أقسامها. استخدم أزرار التعديل والحذف بجوار كل قسم أو منتج. انقل منتجات القسم أو احذفها قبل حذف القسم.</p>
+        <p id="productCount" class="admin-help"></p>
         <div id="categoryList" class="category-list"></div>
       </section>
 
-      <section class="admin-card">
-        <div class="section-heading"><div><h2>المنتجات الحالية</h2><p id="productCount"></p></div></div>
-        <div id="adminProductList" class="admin-product-list"></div>
+      <section class="admin-card" id="admin-offers">
+        <h2>إدارة العروض</h2>
+        <form id="offerForm" class="form-grid">
+          <label>عنوان العرض<input id="offerTitle" required maxlength="100" placeholder="مثال: خصم نهاية الموسم"></label>
+          <label>نسبة الخصم (اختياري)<input id="offerDiscount" type="number" min="1" max="100" step="1" placeholder="مثال: 20"></label>
+          <label class="full-width">تفاصيل العرض<input id="offerDescription" required maxlength="300" placeholder="اكتب تفاصيل العرض وشروطه"></label>
+          <label>صالح حتى (اختياري)<input id="offerEndDate" type="date"></label>
+          <div class="full-width"><button class="button button-dark" type="submit">إضافة العرض</button></div>
+        </form>
+        <div id="adminOfferList" class="admin-offer-list"></div>
       </section>
+
     </div>
   </main>
 
@@ -92,6 +134,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
   <script src="firebase-config.js"></script>
+  <script src="site-content.js"></script>
   <script src="firebase-store.js"></script>
   <script src="catalog.js"></script>
   <script src="admin.js"></script>

@@ -24,6 +24,7 @@
   const storage = firebase.storage();
   const productCollection = db.collection('products');
   const categoryCollection = db.collection('categories');
+  const offerCollection = db.collection('offers');
   const settingsRef = db.collection('store').doc('settings');
   const initializedRef = db.collection('store').doc('catalogInitialized');
 
@@ -104,6 +105,27 @@
     await categoryCollection.doc(categoryDocumentId(name)).delete();
   }
 
+  async function renameCategory(oldName, newName, productIds) {
+    if (productIds.length > 498) {
+      throw new Error('لا يمكن تعديل هذا القسم دفعة واحدة لأنه مرتبط بأكثر من 498 منتجًا.');
+    }
+    const batch = db.batch();
+    batch.set(categoryCollection.doc(categoryDocumentId(newName)), { name: newName });
+    for (const id of productIds) {
+      batch.update(productCollection.doc(productDocumentId(id)), { category: newName });
+    }
+    batch.delete(categoryCollection.doc(categoryDocumentId(oldName)));
+    await batch.commit();
+  }
+
+  async function saveOffer(offer) {
+    await offerCollection.doc(offer.id).set(offer);
+  }
+
+  async function removeOffer(id) {
+    await offerCollection.doc(id).delete();
+  }
+
   async function initializeCatalogIfNeeded(candidateProducts, candidateCategories, candidateSettings) {
     const marker = await initializedRef.get();
     if (marker.exists && marker.data().complete === true) return false;
@@ -168,6 +190,9 @@
     removeProduct,
     saveCategory,
     removeCategory,
+    renameCategory,
+    saveOffer,
+    removeOffer,
     initializeCatalogIfNeeded,
     watchProducts: (next, error) => productCollection.onSnapshot(
       snapshot => next(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))),
@@ -177,10 +202,14 @@
       snapshot => next(snapshot.docs.map(doc => doc.data().name).filter(Boolean)),
       error
     ),
+    watchOffers: (next, error) => offerCollection.onSnapshot(
+      snapshot => next(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))),
+      error
+    ),
     watchSettings: (next, error) => settingsRef.onSnapshot(
       snapshot => next(snapshot.exists ? snapshot.data() : {}),
       error
     ),
-    saveSettings: settings => settingsRef.set(settings)
+    saveSettings: settings => settingsRef.set(settings, { merge: true })
   };
 })();

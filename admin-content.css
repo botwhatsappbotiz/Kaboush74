@@ -1,0 +1,20 @@
+.site-content-form{display:grid;gap:14px}
+.site-content-form>.full-width{padding-top:4px}
+.site-content-group{min-width:0;padding:16px;border:1px solid var(--line);border-radius:14px;background:#fcfbf9}
+.site-content-group summary{cursor:pointer;font-size:15px;font-weight:bold}
+.site-content-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}
+.site-content-grid label{display:grid;align-content:start;gap:7px;font-size:13px}
+.site-content-grid input,.site-content-grid textarea{width:100%;min-width:0;padding:11px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.site-content-grid textarea{min-height:74px;resize:vertical;line-height:1.7}
+.site-visibility-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:14px}
+.site-visibility-option{display:flex;align-items:center;gap:8px;padding:11px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:13px}
+.site-visibility-option input{width:17px;height:17px;accent-color:var(--gold)}
+.custom-section-list{display:grid;gap:10px;margin-top:16px}
+.custom-section-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;border:1px solid var(--line);border-radius:12px;background:#fcfbf9}
+.custom-section-row>div:first-child{min-width:0}
+.custom-section-row p{margin:5px 0 0;color:var(--muted);font-size:13px;line-height:1.7;white-space:pre-line}
+.custom-site-section .section-heading p{white-space:pre-line}
+.admin-nav{position:sticky;top:8px;z-index:5;display:flex;gap:8px;overflow-x:auto;margin:0 0 18px;padding:10px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 5px 18px #1717170a}
+.admin-nav a{flex:none;padding:9px 13px;border-radius:10px;background:#f6f5f2;font-size:13px;font-weight:bold}
+.admin-nav a:hover,.admin-nav a:focus-visible{background:var(--dark);color:#fff}
+@media(max-width:600px){.site-content-grid{grid-template-columns:1fr}.site-content-group{padding:12px}.site-visibility-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}

@@ -1,0 +1,13 @@
+.offer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.offer-card{padding:18px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.offer-card-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.offer-card h3{margin:0;font-size:17px}
+.offer-card p{margin:12px 0;color:var(--muted);font-size:14px;line-height:1.8}
+.offer-card small{color:var(--muted)}
+.offer-discount{flex:none;padding:6px 9px;border-radius:20px;background:#fbf0dc;color:#805c20;font-size:12px;font-weight:bold}
+.admin-offer-list{display:grid;gap:9px;margin-top:16px}
+.admin-offer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border:1px solid var(--line);border-radius:12px}
+.admin-offer-info{display:grid;gap:5px;min-width:0}
+.admin-offer-info span,.admin-offer-info small{color:var(--muted);font-size:12px;line-height:1.7}
+.admin-offer .button{flex:none;padding:9px 11px;font-size:12px}
+@media(max-width:600px){.admin-offer{align-items:flex-start;flex-direction:column}.admin-offer .button{width:100%}}

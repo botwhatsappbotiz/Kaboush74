@@ -4,8 +4,10 @@ let products = readStorage('kaboush_products', demoProducts);
 let settings = readStorage('kaboush_settings', {});
 let cart = readStorage('kaboush_cart', []);
 let categories = readStorage('kaboush_categories', []);
+let offers = readStorage('kaboush_offers', []);
 let activeCategory = 'الكل';
 const $ = id => document.getElementById(id);
+const siteDefaults = window.KABOUSH_SITE_DEFAULTS || {};
 function readStorage(key, fallback){ try { const v=localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; } }
 function saveCart(){ localStorage.setItem('kaboush_cart', JSON.stringify(cart)); $('cartCount').textContent = cart.reduce((n,item)=>n+item.qty,0); }
 function money(value){ return Number(value).toLocaleString('en-US') + ' ج.م'; }
@@ -19,12 +21,22 @@ function renderCategories(){
 function renderProducts(){
  const query=($('searchInput').value||'').trim().toLowerCase();
  const list=products.filter(p=>(activeCategory==='الكل'||p.category===activeCategory)&&`${p.name} ${p.id} ${p.category}`.toLowerCase().includes(query));
- $('productHeading').textContent=activeCategory==='الكل'?'اختيارات كابوش':activeCategory;
+ $('productHeading').textContent=activeCategory==='الكل'?(settings.productTitle||siteDefaults.productTitle):activeCategory;
  if(!list.length){$('productGrid').innerHTML='<div class=\"empty-state\" style=\"grid-column:1/-1\">لا توجد منتجات مطابقة للبحث.</div>';return;}
  $('productGrid').innerHTML=list.map(p=>`<article class=\"product-card\"><div class=\"product-photo\"><img loading=\"lazy\" src=\"${escapeHTML(p.image)}\" alt=\"${escapeHTML(p.name)}\"><span class=\"badge\">${escapeHTML(p.category)}</span><button class=\"heart\" data-fav=\"${escapeHTML(p.id)}\" aria-label=\"أضف إلى قائمة الحجز\">♡</button></div><div class=\"product-info\"><p class=\"product-name\">${escapeHTML(p.name)}</p><p class=\"product-desc\">${escapeHTML(p.desc||'')}</p><div class=\"price-row\"><span class=\"price\">${money(p.price)}</span></div><div class=\"product-actions\"><button class=\"view-button\" data-view=\"${escapeHTML(p.id)}\">التفاصيل</button><button class=\"book-button\" data-book=\"${escapeHTML(p.id)}\">احجز</button></div></div></article>`).join('');
  $('productGrid').querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>showProduct(b.dataset.view,false)));
  $('productGrid').querySelectorAll('[data-book]').forEach(b=>b.addEventListener('click',()=>showProduct(b.dataset.book,true)));
  $('productGrid').querySelectorAll('[data-fav]').forEach(b=>b.addEventListener('click',()=>addToCart(b.dataset.fav)));
+}
+function renderOffers(){
+ const today=new Date();
+ const todayString=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+ const available=offers.filter(offer=>!offer.endDate||offer.endDate>=todayString);
+ $('offerList').innerHTML=available.length?available.map(offer=>`<article class="offer-card"><div class="offer-card-heading"><h3>${escapeHTML(offer.title)}</h3>${offer.discount?`<span class="offer-discount">خصم ${Number(offer.discount)}٪</span>`:''}</div><p>${escapeHTML(offer.description)}</p>${offer.endDate?`<small>صالح حتى ${escapeHTML(new Date(`${offer.endDate}T00:00:00`).toLocaleDateString('ar-EG'))}</small>`:''}</article>`).join(''):`<div class="empty-state">${escapeHTML(settings.offerEmptyText||siteDefaults.offerEmptyText)}</div>`;
+}
+function renderCustomSections(){
+ const sections=Array.isArray(settings.customSections)?settings.customSections:[];
+ $('customSections').innerHTML=sections.map(section=>`<section class="section custom-site-section"><div class="section-heading"><div><h2>${escapeHTML(section.title)}</h2><p>${escapeHTML(section.description)}</p></div></div></section>`).join('');
 }
 function openModal(title,html){$('modalTitle').textContent=title;$('modalBody').innerHTML=html;$('modalBackdrop').classList.add('show');}
 function closeModal(){$('modalBackdrop').classList.remove('show');}
@@ -48,7 +60,60 @@ function whatsappNumber(){return String(settings.whatsapp||'').replace(/\\D/g,''
 function openWhatsApp(message){const number=whatsappNumber();if(!number){closeModal();toast('تعذر إرسال الطلب حاليًا؛ يرجى التواصل مع المتجر مباشرة.');return;}window.open(`https://wa.me/${number}?text=${encodeURIComponent(message)}`,'_blank','noopener');}
 function sendCart(){if(!cart.length){toast('أضف منتجًا أولًا');return;}const items=cart.map((item,i)=>{const p=products.find(x=>x.id===item.id);return p?`${i+1}) ${p.name} — كود ${p.id}\\nالمقاس: ${item.size} | اللون: ${item.color} | الكمية: ${item.qty}\\nسعر القطعة: ${money(p.price)} | الإجمالي: ${money(p.price*item.qty)}`:''}).filter(Boolean);const total=cart.reduce((sum,item)=>{const p=products.find(x=>x.id===item.id);return sum+(p?p.price*item.qty:0);},0);openWhatsApp(`مرحبًا سنتر كابوش 👋\\nأرغب في حجز المنتجات التالية:\\n\\n${items.join('\\n\\n')}\\n\\nالإجمالي التقديري: ${money(total)}\\nهل المنتجات متاحة؟`);}
 function contactWhatsApp(){openWhatsApp('مرحبًا سنتر كابوش، أريد الاستفسار عن المنتجات المتاحة.');}
-function updateContact(){$('phoneText').textContent=settings.phone||'رقم الهاتف يُضاف من إعدادات المتجر.';$('whatsappText').textContent=settings.whatsapp?'رقم واتساب: '+settings.whatsapp:'تواصل معنا مباشرة لمعرفة طرق الحجز.';$('hoursText').textContent=settings.hours||'مواعيد العمل غير متاحة حاليًا.';if(settings.phone){$('phoneLink').href='tel:'+settings.phone;$('phoneLink').classList.remove('hidden');}else{$('phoneLink').classList.add('hidden');}}
+function applySiteContent(){
+ const content={...siteDefaults,...settings};
+ const text=(id,key)=>{const element=$(id);if(element)element.textContent=content[key]??'';};
+ [
+  ['headerStoreName','storeName'],['footerStoreName','storeName'],['footerCopyrightName','storeName'],
+  ['headerTagline','tagline'],['footerTagline','tagline'],['heroEyebrow','heroEyebrow'],
+  ['heroTitle','heroTitle'],['heroDescription','heroDescription'],['heroButton','heroButton'],
+  ['searchButton','searchButton'],['categoryTitle','categoryTitle'],['categoryDescription','categoryDescription'],
+  ['productDescription','productDescription'],['showAll','showAllButton'],
+  ['calloutTitle','calloutTitle'],['calloutDescription','calloutDescription'],['openCartCallout','calloutButton'],
+  ['offerSectionTitle','offerTitle'],['offerSectionDescription','offerDescription'],
+  ['locationTitle','locationTitle'],['locationDescription','locationDescription'],
+  ['locationCardTitle','locationCardTitle'],['locationCardDescription','locationCardDescription'],
+  ['bookingCardTitle','bookingCardTitle'],['bookingCardDescription','bookingCardDescription'],
+  ['shoppingCardTitle','shoppingCardTitle'],['shoppingCardDescription','shoppingCardDescription'],
+  ['mapTitle','mapTitle'],['mapButton','mapButton'],
+  ['contactTitle','contactTitle'],['contactDescription','contactDescription'],
+  ['phoneCardTitle','phoneCardTitle'],['whatsappCardTitle','whatsappCardTitle'],['hoursCardTitle','hoursCardTitle'],
+  ['phoneLink','phoneLinkLabel'],['contactWhatsApp','whatsappButtonLabel'],
+  ['footerDescription','footerDescription'],['navHomeLabel','navHomeLabel'],
+  ['navProductsLabel','navProductsLabel'],['navOffersLabel','navOffersLabel'],
+  ['navCartLabel','navCartLabel'],['navLocationLabel','navLocationLabel']
+ ].forEach(([id,key])=>text(id,key));
+ $('cartTop').setAttribute('aria-label',content.headerCartLabel);
+ $('headerContactLink').setAttribute('aria-label',content.headerContactLabel);
+ const searchInput=$('searchInput');
+ searchInput.placeholder=content.searchPlaceholder;
+ searchInput.setAttribute('aria-label',content.searchPlaceholder);
+ $('heroTitle').style.whiteSpace='pre-line';
+ ['locationCardDescription','bookingCardDescription','shoppingCardDescription','footerDescription'].forEach(id=>$(id).style.whiteSpace='pre-line');
+ const mapLatitude=Number(content.mapLatitude),mapLongitude=Number(content.mapLongitude);
+ const validCoordinates=Number.isFinite(mapLatitude)&&mapLatitude>=-90&&mapLatitude<=90&&Number.isFinite(mapLongitude)&&mapLongitude>=-180&&mapLongitude<=180;
+ const latitude=validCoordinates?mapLatitude:STORE_LOCATION.lat;
+ const longitude=validCoordinates?mapLongitude:STORE_LOCATION.lng;
+ $('mapCoordinates').textContent=`${latitude}, ${longitude}`;
+ $('mapButton').href=`https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
+ document.title=`${content.storeName} | ${content.tagline}`;
+ document.querySelector('meta[name="description"]').content=content.tagline;
+ document.querySelectorAll('.brand-mark').forEach(mark=>{mark.textContent=String(content.storeName||'K').trim().charAt(0)||'K';});
+ try{
+  const heroImage=new URL(content.heroImage);
+  if(['https:','http:'].includes(heroImage.protocol))$('heroSection').style.backgroundImage=`linear-gradient(90deg,#080808ed,#08080880),url("${heroImage.href}")`;
+ }catch(error){console.error('Invalid store hero image URL:',error);}
+ [
+  ['heroSection','showHero'],['searchForm','showSearch'],['categoriesSection','showCategories'],
+  ['products','showProducts'],['calloutSection','showCallout'],['offers','showOffers'],
+  ['location','showLocation'],['contact','showContact']
+ ].forEach(([id,key])=>$(id).classList.toggle('hidden',content[key]===false));
+ document.querySelectorAll('.bottom-nav a[href="#offers"]').forEach(link=>link.classList.toggle('hidden',content.showOffers===false));
+ document.querySelectorAll('.bottom-nav a[href="#products"]').forEach(link=>link.classList.toggle('hidden',content.showProducts===false));
+ document.querySelectorAll('.bottom-nav a[href="#location"]').forEach(link=>link.classList.toggle('hidden',content.showLocation===false));
+ $('headerContactLink').classList.toggle('hidden',content.showContact===false);
+}
+function updateContact(){const content={...siteDefaults,...settings};$('phoneText').textContent=settings.phone||content.phoneFallback;$('whatsappText').textContent=settings.whatsapp?'رقم واتساب: '+settings.whatsapp:content.whatsappFallback;$('hoursText').textContent=settings.hours||content.hoursFallback;if(settings.phone){$('phoneLink').href='tel:'+settings.phone;$('phoneLink').classList.remove('hidden');}else{$('phoneLink').classList.add('hidden');}}
 $('searchForm').addEventListener('submit',e=>{e.preventDefault();renderProducts();$('products').scrollIntoView({behavior:'smooth'});});
 $('searchInput').addEventListener('input',renderProducts);
 $('showAll').addEventListener('click',()=>{activeCategory='الكل';$('searchInput').value='';renderCategories();renderProducts();});
@@ -57,7 +122,8 @@ $('contactWhatsApp').addEventListener('click',contactWhatsApp);
 $('closeModal').addEventListener('click',closeModal);$('modalBackdrop').addEventListener('click',e=>{if(e.target===$('modalBackdrop'))closeModal();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 document.querySelectorAll('.nav-item[href]').forEach(a=>a.addEventListener('click',()=>{document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));a.classList.add('active');}));
-$('year').textContent=new Date().getFullYear();renderCategories();renderProducts();saveCart();updateContact();
+$('year').textContent=new Date().getFullYear();applySiteContent();renderCategories();renderProducts();saveCart();updateContact();renderCustomSections();
+renderOffers();
 function startCloudSync(){
  const status=$('cloudStatus'),store=window.KABOUSH_STORE;
  if(!store||!store.isConfigured){
@@ -77,7 +143,12 @@ function startCloudSync(){
   status.classList.remove('hidden');
   console.error('Firebase category sync failed:',error);
  });
- store.watchSettings(items=>{settings=items;updateContact();},error=>{
+ store.watchOffers(items=>{offers=items;renderOffers();},error=>{
+  status.textContent='تعذر تحميل عروض المتجر من Firebase.';
+  status.classList.remove('hidden');
+  console.error('Firebase offer sync failed:',error);
+ });
+ store.watchSettings(items=>{settings=items;applySiteContent();updateContact();renderProducts();renderOffers();renderCustomSections();},error=>{
   status.textContent='تعذر تحميل بيانات التواصل من Firebase.';
   status.classList.remove('hidden');
   console.error('Firebase settings sync failed:',error);
