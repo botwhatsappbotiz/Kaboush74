@@ -20,6 +20,7 @@
       <a class="icon-button" href="#contact" aria-label="تواصل معنا">☎</a>
     </div>
   </header>
+  <div class="cloud-status hidden" id="cloudStatus" role="status"></div>
 
   <main id="home" class="app-shell">
     <section class="hero">
@@ -105,6 +106,10 @@
     </div>
   </div>
   <div id="toast" class="toast" role="status"></div>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="firebase-store.js"></script>
   <script src="catalog.js"></script>
   <script src="app.js"></script>
 </body>

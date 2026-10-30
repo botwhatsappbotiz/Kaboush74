@@ -20,14 +20,14 @@
   <main class="admin-shell">
     <section class="admin-card" id="authCard">
       <h1 id="authTitle">دخول صاحب المتجر</h1>
-      <p id="authDescription">أدخل كلمة مرور لوحة الإدارة.</p>
+      <p id="authDescription">سجّل الدخول إلى حساب الإدارة في Firebase.</p>
       <form id="authForm" class="admin-form"></form>
-      <p class="notice admin-warning">نسخة تجريبية فقط: الحماية في هذه الصفحة يمكن تجاوزها، والتعديلات لا تظهر على أجهزة العملاء. يلزم خادم وتسجيل دخول وقاعدة بيانات آمنة قبل النشر.</p>
+      <p id="authStatus" class="admin-help" role="status">تأكد من إعداد Firebase ونشر قواعد الأمان قبل تسجيل الدخول.</p>
     </section>
 
     <div id="adminContent" class="hidden">
       <div class="admin-heading">
-        <div><h1>لوحة إدارة المتجر</h1><p>هذه النسخة تحفظ التغييرات على هذا المتصفح فقط؛ لن تظهر للزوار على أجهزتهم.</p></div>
+        <div><h1>لوحة إدارة المتجر</h1><p id="adminSyncStatus">جارٍ الاتصال بقاعدة البيانات...</p></div>
         <button class="button button-light" id="logoutButton" type="button">تسجيل الخروج</button>
       </div>
 
@@ -87,6 +87,12 @@
   </main>
 
   <div id="toast" class="toast" role="status"></div>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="firebase-store.js"></script>
   <script src="catalog.js"></script>
   <script src="admin.js"></script>
 </body>

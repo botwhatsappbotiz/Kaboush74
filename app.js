@@ -7,7 +7,6 @@ let categories = readStorage('kaboush_categories', []);
 let activeCategory = 'الكل';
 const $ = id => document.getElementById(id);
 function readStorage(key, fallback){ try { const v=localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; } }
-function saveProducts(){ localStorage.setItem('kaboush_products', JSON.stringify(products)); }
 function saveCart(){ localStorage.setItem('kaboush_cart', JSON.stringify(cart)); $('cartCount').textContent = cart.reduce((n,item)=>n+item.qty,0); }
 function money(value){ return Number(value).toLocaleString('en-US') + ' ج.م'; }
 function escapeHTML(value){ return String(value ?? '').replace(/[&<>"']/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
@@ -59,3 +58,29 @@ $('closeModal').addEventListener('click',closeModal);$('modalBackdrop').addEvent
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 document.querySelectorAll('.nav-item[href]').forEach(a=>a.addEventListener('click',()=>{document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));a.classList.add('active');}));
 $('year').textContent=new Date().getFullYear();renderCategories();renderProducts();saveCart();updateContact();
+function startCloudSync(){
+ const status=$('cloudStatus'),store=window.KABOUSH_STORE;
+ if(!store||!store.isConfigured){
+  status.textContent='المتجر يعمل بالبيانات المحلية فقط؛ لم تتم مزامنته مع Firebase بعد.';
+  status.classList.remove('hidden');
+  return;
+ }
+ status.textContent='جارٍ تحميل المنتجات من المتجر...';
+ status.classList.remove('hidden');
+ store.watchProducts(items=>{products=items;renderCategories();renderProducts();status.classList.add('hidden');},error=>{
+  status.textContent='تعذر تحميل بيانات المتجر السحابية. تحقق من إعداد Firebase وقواعد القراءة.';
+  status.classList.remove('hidden');
+  console.error('Firebase product sync failed:',error);
+ });
+ store.watchCategories(items=>{categories=items;renderCategories();},error=>{
+  status.textContent='تعذر تحميل أقسام المتجر من Firebase.';
+  status.classList.remove('hidden');
+  console.error('Firebase category sync failed:',error);
+ });
+ store.watchSettings(items=>{settings=items;updateContact();},error=>{
+  status.textContent='تعذر تحميل بيانات التواصل من Firebase.';
+  status.classList.remove('hidden');
+  console.error('Firebase settings sync failed:',error);
+ });
+}
+startCloudSync();

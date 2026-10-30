@@ -1,0 +1,34 @@
+إعداد متجر KABOUSH للمزامنة بين الأجهزة
+=========================================
+
+GitHub Pages يستضيف ملفات الموقع فقط. Firebase يحفظ المنتجات والأقسام وبيانات
+التواصل والصور حتى تظهر على أجهزة العملاء.
+
+1. أنشئ مشروع Firebase، ثم أضف تطبيق Web وانسخ إعداداته إلى firebase-config.js.
+   املأ apiKey وauthDomain وprojectId وstorageBucket وmessagingSenderId وappId.
+2. فعّل Authentication > Email/Password وأنشئ حساب صاحب المتجر. لا تنشئ صفحة
+   تسجيل حسابات عامة. أضف نطاق GitHub Pages إلى Authorized domains.
+3. من Authentication، انسخ UID لحساب صاحب المتجر وضعه في ownerUid داخل
+   firebase-config.js.
+4. أنشئ Cloud Firestore وفعّل Firebase Storage. انسخ firestore.rules إلى
+   Firestore > Rules، واستبدل REPLACE_WITH_OWNER_FIREBASE_UID بالـ UID نفسه،
+   ثم انشر القواعد. كرر ذلك في Storage > Rules باستخدام storage.rules.
+5. ارفع ملفات الموقع إلى جذر مستودع GitHub. فعّل النشر التلقائي من
+   Settings > Pages، ثم اختر Deploy from a branch، وحدد main والمجلد /(root).
+   ينشر GitHub Pages تلقائيًا بعد كل تحديث للفرع. ملف pages.yml في الجذر
+   مرجع للإعداد فقط؛ GitHub Actions لا يشغّل ملفات workflow من خارج
+   .github/workflows.
+6. افتح رابط الموقع المنشور ثم admin.html، وسجّل الدخول ببريد وكلمة مرور حساب
+   Firebase الذي أنشأته.
+7. عند أول دخول، ينقل الموقع المنتجات المحفوظة محليًا في هذا المتصفح إلى
+   Firebase. بعد ذلك تتم مزامنة تغييرات اللوحة تلقائيًا على أجهزة العملاء.
+
+ملاحظات الأمان والتشغيل:
+- لا تضع كلمة مرور أو Service Account JSON أو GitHub token في ملفات الموقع.
+- Firebase Web config وownerUid إعدادات عميل عامة؛ قواعد Firebase هي التي
+  تمنع غير صاحب UID من تعديل المنتجات والإعدادات أو رفع الصور.
+- قراءة كتالوج المنتجات والصور عامة للزوار، والكتابة مقصورة على UID المحدد.
+- قد يتطلب Firebase Storage تفعيل الفوترة وفق متطلبات Firebase الحالية.
+- لا تحذف قواعد الأمان أو تستبدلها بقواعد تسمح بالكتابة العامة.
+- لا تبدأ إدخال بيانات فعلية قبل إكمال الخطوات ونشر القواعد والتحقق من ظهور
+  حالة الاتصال بـ Firebase في لوحة الإدارة.

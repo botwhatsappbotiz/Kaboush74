@@ -1,10 +1,9 @@
-const ADMIN_PASSWORD_HASH = '715c95ff1aad4ab7651363960f7e6cb12d169b56b45747f2c4e6cd43c5dd9bae';
-const SESSION_KEY = 'kaboush_admin_authenticated';
 const $ = id => document.getElementById(id);
 let imageProcessing = Promise.resolve();
-let products = readStorage('kaboush_products', window.KABOUSH_DEMO_PRODUCTS);
-let settings = readStorage('kaboush_settings', {});
-let categories = readStorage('kaboush_categories', []);
+let products = [];
+let settings = {};
+let categories = [];
+let unsubscribeStore = [];
 
 function readStorage(key, fallback) {
   try {
@@ -22,57 +21,88 @@ function showToast(message) {
   window.setTimeout(() => element.classList.remove('show'), 2600);
 }
 
-async function passwordHash(password) {
-  if (!window.crypto || !window.crypto.subtle) {
-    throw new Error('يلزم فتح لوحة الإدارة عبر HTTPS أو localhost لتفعيل تسجيل الدخول.');
-  }
-  const bytes = new TextEncoder().encode(password);
-  const digest = await window.crypto.subtle.digest('SHA-256', bytes);
-  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
-}
-
 function renderAuth() {
   $('authTitle').textContent = 'دخول صاحب المتجر';
-  $('authDescription').textContent = 'أدخل كلمة مرور لوحة الإدارة.';
+  $('authDescription').textContent = 'سجّل الدخول إلى حساب الإدارة في Firebase.';
   $('authForm').innerHTML = `
+    <label>البريد الإلكتروني<input id="adminEmail" type="email" autocomplete="username" required></label>
     <label>كلمة المرور<input id="adminPassword" type="password" autocomplete="current-password" required></label>
     <button class="button button-dark" type="submit">دخول</button>`;
   $('authForm').addEventListener('submit', authenticate);
+  if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {
+    $('authStatus').textContent = window.KABOUSH_STORE
+      ? window.KABOUSH_STORE.configurationMessage
+      : 'تعذر تحميل Firebase. تحقق من اتصال الإنترنت وإعداد ملفات الموقع.';
+    $('authForm').querySelector('button').disabled = true;
+  } else {
+    $('authStatus').textContent = 'استخدم حساب الإدارة الذي أُنشئ في Firebase Authentication.';
+  }
 }
 
 async function authenticate(event) {
   event.preventDefault();
-  const password = $('adminPassword').value;
+  if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {
+    showToast('أكمل إعداد Firebase أولًا.');
+    return;
+  }
   try {
-    const hash = await passwordHash(password);
-    if (hash !== ADMIN_PASSWORD_HASH) {
-      showToast('كلمة المرور غير صحيحة.');
-      return;
-    }
-    sessionStorage.setItem(SESSION_KEY, 'true');
-    showAdmin();
+    await window.KABOUSH_STORE.signIn($('adminEmail').value.trim(), $('adminPassword').value);
   } catch (error) {
-    showToast(error.message);
+    $('authStatus').textContent = `تعذر تسجيل الدخول إلى Firebase: ${error.code || error.message}`;
   }
 }
 
-function showAdmin() {
+async function showAdmin(user) {
+  if (user.uid !== window.KABOUSH_FIREBASE_CONFIG.ownerUid) {
+    $('authStatus').textContent = 'هذا الحساب غير مصرح له بإدارة المتجر.';
+    await window.KABOUSH_STORE.signOut();
+    return;
+  }
   $('authCard').classList.add('hidden');
   $('adminContent').classList.remove('hidden');
-  $('adminWhatsapp').value = settings.whatsapp || '';
-  $('adminPhone').value = settings.phone || '';
-  $('adminHours').value = settings.hours || '';
-  renderCategories();
-  renderProducts();
+  $('adminSyncStatus').textContent = `تم تسجيل الدخول: ${user.email || 'حساب الإدارة'} · جارٍ تحميل بيانات المتجر`;
+  try {
+    const savedProducts = readStorage('kaboush_products', window.KABOUSH_DEMO_PRODUCTS);
+    const savedCategories = readStorage('kaboush_categories', []);
+    const savedSettings = readStorage('kaboush_settings', {});
+    const wasSeeded = await window.KABOUSH_STORE.initializeCatalogIfNeeded(
+      savedProducts,
+      savedCategories,
+      savedSettings
+    );
+    if (wasSeeded) showToast('تم نقل الكتالوج إلى Firebase ليظهر على جميع الأجهزة.');
+    unsubscribeStore.forEach(unsubscribe => unsubscribe());
+    unsubscribeStore = [
+      window.KABOUSH_STORE.watchProducts(items => {
+        products = items;
+        renderCategories();
+        renderProducts();
+      }, handleCloudError),
+      window.KABOUSH_STORE.watchCategories(items => {
+        categories = items;
+        renderCategories();
+      }, handleCloudError),
+      window.KABOUSH_STORE.watchSettings(items => {
+        settings = items;
+        $('adminWhatsapp').value = settings.whatsapp || '';
+        $('adminPhone').value = settings.phone || '';
+        $('adminHours').value = settings.hours || '';
+      }, handleCloudError)
+    ];
+    $('adminSyncStatus').textContent = 'متصل بقاعدة Firebase · التغييرات تتزامن مع جميع الأجهزة';
+  } catch (error) {
+    $('adminSyncStatus').textContent = 'تعذر تحميل قاعدة البيانات. راجع إعداد Firebase وقواعد الأمان.';
+    showToast(`فشل تحميل بيانات المتجر من Firebase: ${error.message}`);
+  }
+}
+
+function handleCloudError(error) {
+  $('adminSyncStatus').textContent = 'انقطع الاتصال بقاعدة البيانات. تحقق من قواعد Firebase والإنترنت.';
+  showToast(error.message || 'تعذر مزامنة بيانات المتجر.');
 }
 
 function allCategories() {
   return [...new Set([...categories, ...products.map(product => product.category)].filter(Boolean))];
-}
-
-function persistCategories() {
-  categories = allCategories();
-  localStorage.setItem('kaboush_categories', JSON.stringify(categories));
 }
 
 function renderCategories() {
@@ -122,10 +152,6 @@ function resetProductForm() {
 function editProduct(id) {
   const product = products.find(item => item.id === id);
   if (!product) return;
-  if (!allCategories().includes(product.category)) {
-    categories.push(product.category);
-    persistCategories();
-  }
   renderCategories();
   $('productId').value = product.id;
   $('pName').value = product.name;
@@ -250,15 +276,19 @@ function verifyImageSource(source) {
   });
 }
 
-$('settingsForm').addEventListener('submit', event => {
+$('settingsForm').addEventListener('submit', async event => {
   event.preventDefault();
-  settings = {
+  const updatedSettings = {
     whatsapp: $('adminWhatsapp').value.trim(),
     phone: $('adminPhone').value.trim(),
     hours: $('adminHours').value.trim()
   };
-  localStorage.setItem('kaboush_settings', JSON.stringify(settings));
-  showToast('تم حفظ بيانات التواصل.');
+  try {
+    await window.KABOUSH_STORE.saveSettings(updatedSettings);
+    showToast('تم حفظ بيانات التواصل ومزامنتها.');
+  } catch (error) {
+    showToast(`تعذر حفظ بيانات التواصل: ${error.message}`);
+  }
 });
 
 $('productForm').addEventListener('submit', async event => {
@@ -273,6 +303,10 @@ $('productForm').addEventListener('submit', async event => {
   }
   const price = Number($('pPrice').value);
   const image = $('pImage').value.trim();
+  if (!/^[A-Za-z0-9_-]{1,100}$/.test(id)) {
+    showToast('كود المنتج يجب أن يحتوي على أحرف إنجليزية أو أرقام أو شرطة فقط.');
+    return;
+  }
   if (!Number.isFinite(price) || price < 0 || !validImageUrl(image)) {
     showToast('أدخل سعرًا صحيحًا ورابط صورة صالحًا أو اختر ملف صورة.');
     return;
@@ -284,44 +318,61 @@ $('productForm').addEventListener('submit', async event => {
     showToast(error.message);
     return;
   }
+  const existingProduct = oldId ? products.find(item => item.id === oldId) : null;
   const product = {
     id,
     name: $('pName').value.trim(),
     price,
     category: $('pCategory').value,
     image,
+    imagePath: existingProduct && existingProduct.image === image ? (existingProduct.imagePath || '') : '',
     desc: $('pDesc').value.trim(),
     sizes: oldId ? (products.find(item => item.id === oldId).sizes || ['M', 'L', 'XL']) : ['M', 'L', 'XL'],
     colors: oldId ? (products.find(item => item.id === oldId).colors || ['أسود', 'أبيض']) : ['أسود', 'أبيض']
   };
-  let updatedProducts;
-  if (oldId) {
-    updatedProducts = products.map(item => item.id === oldId ? product : item);
-    if (oldId !== id) {
+  let uploadedImagePath = '';
+  if (image.startsWith('data:image/')) {
+    try {
+      const blob = await fetch(image).then(response => response.blob());
+      const uploaded = await window.KABOUSH_STORE.uploadImage(id, blob);
+      product.image = uploaded.url;
+      product.imagePath = uploaded.path;
+      uploadedImagePath = uploaded.path;
+    } catch (error) {
+      showToast(`تعذر رفع الصورة إلى Firebase Storage: ${error.message}`);
+      return;
+    }
+  }
+  try {
+    const result = await window.KABOUSH_STORE.saveProduct(oldId, product);
+    if (oldId && oldId !== id) {
       const cart = readStorage('kaboush_cart', []);
       cart.forEach(item => { if (item.id === oldId) item.id = id; });
       localStorage.setItem('kaboush_cart', JSON.stringify(cart));
     }
-  } else {
-    updatedProducts = [product, ...products];
-  }
-  try {
-    localStorage.setItem('kaboush_products', JSON.stringify(updatedProducts));
-  } catch {
-    showToast('مساحة التخزين في هذا المتصفح غير كافية. استخدم صورة أصغر.');
+    if (result.imageCleanupFailed) {
+      showToast('تم حفظ المنتج، لكن تعذر حذف الصورة القديمة من التخزين.');
+    } else {
+      showToast(oldId ? 'تم تحديث المنتج ومزامنته.' : 'تمت إضافة المنتج ومزامنته.');
+    }
+  } catch (error) {
+    if (uploadedImagePath) {
+      try {
+        await window.KABOUSH_STORE.deleteImage(uploadedImagePath);
+      } catch {
+        showToast('فشل حفظ المنتج وتعذر تنظيف الصورة المرفوعة. احذف الملف من Firebase Storage.');
+        return;
+      }
+    }
+    showToast(`تعذر حفظ المنتج في Firebase: ${error.message}`);
     return;
   }
-  products = updatedProducts;
-  persistCategories();
-  showToast(oldId ? 'تم تحديث المنتج.' : 'تمت إضافة المنتج.');
   resetProductForm();
-  renderCategories();
-  renderProducts();
 });
 
 $('cancelEditButton').addEventListener('click', resetProductForm);
 
-$('categoryForm').addEventListener('submit', event => {
+$('categoryForm').addEventListener('submit', async event => {
   event.preventDefault();
   const name = $('categoryName').value.trim();
   if (!name || name === 'الكل') {
@@ -332,14 +383,18 @@ $('categoryForm').addEventListener('submit', event => {
     showToast('هذا القسم موجود بالفعل.');
     return;
   }
-  categories.push(name);
-  persistCategories();
-  $('categoryForm').reset();
-  renderCategories();
-  showToast('تمت إضافة القسم.');
+  try {
+    await window.KABOUSH_STORE.saveCategory(name);
+    categories = [...categories, name];
+    $('categoryForm').reset();
+    renderCategories();
+    showToast('تمت إضافة القسم ومزامنته.');
+  } catch (error) {
+    showToast(`تعذر حفظ القسم في Firebase: ${error.message}`);
+  }
 });
 
-$('categoryList').addEventListener('click', event => {
+$('categoryList').addEventListener('click', async event => {
   const button = event.target.closest('[data-delete-category]');
   if (!button) return;
   const name = button.dataset.deleteCategory;
@@ -348,12 +403,17 @@ $('categoryList').addEventListener('click', event => {
     return;
   }
   if (!window.confirm(`هل تريد حذف قسم "${name}"؟`)) return;
-  categories = categories.filter(category => category !== name);
-  persistCategories();
-  renderCategories();
+  try {
+    await window.KABOUSH_STORE.removeCategory(name);
+    categories = categories.filter(category => category !== name);
+    renderCategories();
+    showToast('تم حذف القسم من المتجر.');
+  } catch (error) {
+    showToast(`تعذر حذف القسم من Firebase: ${error.message}`);
+  }
 });
 
-$('adminProductList').addEventListener('click', event => {
+$('adminProductList').addEventListener('click', async event => {
   const editButton = event.target.closest('[data-edit-product]');
   if (editButton) {
     editProduct(editButton.dataset.editProduct);
@@ -364,19 +424,28 @@ $('adminProductList').addEventListener('click', event => {
   const id = deleteButton.dataset.deleteProduct;
   const product = products.find(item => item.id === id);
   if (!product || !window.confirm(`هل تريد حذف المنتج "${product.name}"؟`)) return;
-  products = products.filter(item => item.id !== id);
-  const cart = readStorage('kaboush_cart', []);
-  localStorage.setItem('kaboush_cart', JSON.stringify(cart.filter(item => item.id !== id)));
-  localStorage.setItem('kaboush_products', JSON.stringify(products));
-  persistCategories();
-  renderCategories();
-  renderProducts();
-  showToast('تم حذف المنتج.');
+  try {
+    const result = await window.KABOUSH_STORE.removeProduct(id);
+    products = products.filter(item => item.id !== id);
+    const cart = readStorage('kaboush_cart', []);
+    localStorage.setItem('kaboush_cart', JSON.stringify(cart.filter(item => item.id !== id)));
+    renderCategories();
+    renderProducts();
+    showToast(result.imageCleanupFailed
+      ? 'تم حذف المنتج، لكن تعذر حذف صورته من Firebase Storage.'
+      : 'تم حذف المنتج من المتجر.');
+  } catch (error) {
+    showToast(`تعذر حذف المنتج من Firebase: ${error.message}`);
+  }
 });
 
-$('logoutButton').addEventListener('click', () => {
-  sessionStorage.removeItem(SESSION_KEY);
-  window.location.reload();
+$('logoutButton').addEventListener('click', async () => {
+  unsubscribeStore.forEach(unsubscribe => unsubscribe());
+  try {
+    await window.KABOUSH_STORE.signOut();
+  } catch (error) {
+    showToast(`تعذر تسجيل الخروج: ${error.message}`);
+  }
 });
 
 function escapeHTML(value) {
@@ -385,9 +454,18 @@ function escapeHTML(value) {
   }[character]));
 }
 
-if (sessionStorage.getItem(SESSION_KEY) === 'true') {
-  showAdmin();
+if (!window.KABOUSH_STORE || !window.KABOUSH_STORE.isConfigured) {
+  renderAuth();
 } else {
   renderAuth();
+  window.KABOUSH_STORE.auth.onAuthStateChanged(user => {
+    if (user) showAdmin(user);
+    else {
+      unsubscribeStore.forEach(unsubscribe => unsubscribe());
+      unsubscribeStore = [];
+      $('adminContent').classList.add('hidden');
+      $('authCard').classList.remove('hidden');
+    }
+  }, handleCloudError);
 }
 updateImageChoice();
