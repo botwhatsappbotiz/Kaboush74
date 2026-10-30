@@ -4,17 +4,15 @@
 GitHub Pages يستضيف ملفات الموقع فقط. Firebase يحفظ المنتجات والأقسام وبيانات
 التواصل والصور حتى تظهر على أجهزة العملاء.
 
-1. أنشئ مشروع Firebase، ثم أضف تطبيق Web وانسخ إعداداته إلى firebase-config.js.
-   املأ apiKey وauthDomain وprojectId وstorageBucket وmessagingSenderId وappId.
+1. تم إدخال إعدادات مشروع Firebase وOwner UID في firebase-config.js بالفعل. لا تستبدلها بقيم تجريبية.
 2. فعّل Authentication > Email/Password وأنشئ حساب صاحب المتجر بالبريد
    K.STORE@GMAIL.COM وكلمة المرور التي اخترتها. لا تحفظ كلمة المرور في ملفات
    الموقع ولا تنشئ صفحة تسجيل حسابات عامة. أضف نطاق GitHub Pages إلى Authorized
    domains.
-3. من Authentication، انسخ UID لحساب صاحب المتجر وضعه في ownerUid داخل
-   firebase-config.js.
+3. تم إدخال Owner UID في firebase-config.js وملفي القواعد بالفعل.
 4. أنشئ Cloud Firestore وفعّل Firebase Storage. انسخ firestore.rules إلى
    Firestore > Rules، واستبدل REPLACE_WITH_OWNER_FIREBASE_UID بالـ UID نفسه،
-   ثم انشر القواعد. كرر ذلك في Storage > Rules باستخدام storage.rules.
+   ثم انشر القواعد. كرر ذلك في Storage > Rules باستخدام storage.rules. تم استبدال UID داخل الملفين بالفعل.
 5. ارفع ملفات الموقع إلى جذر مستودع GitHub. فعّل النشر التلقائي من
    Settings > Pages، ثم اختر Deploy from a branch، وحدد main والمجلد /(root).
    ينشر GitHub Pages تلقائيًا بعد كل تحديث للفرع. ملف pages.yml في الجذر

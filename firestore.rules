@@ -3,7 +3,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function isOwner() {
       return request.auth != null
-        && request.auth.uid == 'REPLACE_WITH_OWNER_FIREBASE_UID';
+        && request.auth.uid == 'VaXnfHyyUihszIFiGdezFiBnTT32';
     }
 
     match /products/{productId} {
